@@ -8,8 +8,8 @@ import { getOrInitializeMapValue } from "../helpers/helpers.js";
 import StationBoard from "../components/stationBoard.js";
 
 const headingText = "Stations";
-const errorMsg = [":(", "", "Error", ""];
-const emptyMsg = [":)", "", "No trains!", ""];
+const errorMsg = [":(", "", "Error", "?"];
+const emptyMsg = [":)", " ", "No trains!", " "];
 
 const manualRefresh$ = new Subject();
 const pauseRefresh$ = new Subject();
@@ -210,7 +210,7 @@ const getCurrentMsgTable = (platformId, groupId) => {
   const station = arrivals.get(platformId.toString());
   const group = station?.get(groupId.toString());
 
-  return group ? group.map((a) => [a.Line, a.Car, a.Destination, a.Min]) : [[errorMsg]];
+  return group ? group.map((a) => [a.Line, a.Car, a.DestinationName, a.Min]) : [[errorMsg]];
 };
 
 /**

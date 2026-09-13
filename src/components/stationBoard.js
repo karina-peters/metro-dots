@@ -121,11 +121,11 @@ class StationBoard extends DotMatrix {
                 tap(() => {
                   console.log("updating message table");
                   self.msgTable = msgTable;
-                })
+                }),
               ),
-              this.doTransition$(p, msgTable, stationId)
-            ).pipe(tap(() => p.redraw()))
-          )
+              this.doTransition$(p, msgTable, stationId),
+            ).pipe(tap(() => p.redraw())),
+          ),
         )
         .subscribe();
 
@@ -186,7 +186,7 @@ class StationBoard extends DotMatrix {
       }),
       finalize(() => {
         this.isInTransition = false;
-      })
+      }),
     );
   };
 
@@ -201,7 +201,7 @@ class StationBoard extends DotMatrix {
 
     return from(table).pipe(
       concatMap((row, rowIndex) => this.typeRow$(p, row, rowIndex + offset)),
-      finalize(() => (this.typewriterState.isActive = false))
+      finalize(() => (this.typewriterState.isActive = false)),
     );
   };
 
@@ -210,7 +210,7 @@ class StationBoard extends DotMatrix {
 
     return of(row).pipe(
       concatMap((cols) => from(cols)),
-      concatMap((col, colIndex) => this.typeCell$(p, col, colIndex))
+      concatMap((col, colIndex) => this.typeCell$(p, col, colIndex)),
     );
   };
 
@@ -226,9 +226,9 @@ class StationBoard extends DotMatrix {
           tap(() => {
             this.typewriterState.currentChar += 1;
             p.redraw();
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
   };
 
@@ -266,8 +266,8 @@ class StationBoard extends DotMatrix {
         return;
       }
 
-      // Skip rendering the hidden column or null strings
-      if (str === null || (this.columnHidden && colIndex === this.columnToHide)) {
+      // Skip rendering the hidden column
+      if (this.columnHidden && colIndex === this.columnToHide) {
         continue;
       }
 
@@ -276,8 +276,9 @@ class StationBoard extends DotMatrix {
 
       const isTyping = typewriter.isActive && typewriter.rowIndex === rowIndex && typewriter.colIndex === colIndex;
       const charLimit = isTyping ? typewriter.currentChar : maxMsgLength;
+      const strSanitized = str || "-";
 
-      for (const char of str.slice(0, charLimit)) {
+      for (const char of strSanitized.slice(0, charLimit)) {
         const charColor = colIndex === 1 && char === "8" ? dotColor.highlight : color;
         this.renderChar(p, char, charStartX, startY, charColor);
         charStartX += (charWidth + charGap) * this.dotUnit;
@@ -302,7 +303,7 @@ class StationBoard extends DotMatrix {
 
     // Calculate hug widths based on adjusted columns
     const hugWidths = adjustedHeadings.map((text, i) =>
-      adjustedLayout[i] === "hug" ? (this.getMsgLength(text) + colGap) * this.dotUnit : 0
+      adjustedLayout[i] === "hug" ? (this.getMsgLength(text) + colGap) * this.dotUnit : 0,
     );
     const totalHugWidth = hugWidths.reduce((sum, w) => sum + w, 0);
 
