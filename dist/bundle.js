@@ -2936,7 +2936,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var headingText = "Home";
 var template = function template() {
-  return "\n    <div class=\"hero\">\n      <div class=\"wrapper\">\n        <h1 class=\"title\">Metro Visualizer</h1>\n        <div class=\"button-wrapper\">\n          <button id=\"btn-stn\">Stations</button>\n          <button id=\"btn-train\">Trains</button>\n          <!-- <button id=\"btn-map\" disabled>Map</button>\n          <button id=\"btn-line\" disabled>Lines</button> -->\n        </div>\n      </div>\n    </div>\n  ";
+  return "\n    <div class=\"hero\">\n      <div class=\"wrapper\">\n        <h1 class=\"title\">Metro Dots</h1>\n        <div class=\"button-wrapper\">\n          <button id=\"btn-stn\">Stations</button>\n          <button id=\"btn-train\">Trains</button>\n          <!-- <button id=\"btn-map\" disabled>Map</button>\n          <button id=\"btn-line\" disabled>Lines</button> -->\n        </div>\n      </div>\n    </div>\n  ";
 };
 (function () {
   // Fetch data
@@ -4628,8 +4628,8 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 
 
 var headingText = "Stations";
-var errorMsg = [":(", "", "Error", ""];
-var emptyMsg = [":)", "", "No trains!", ""];
+var errorMsg = [":(", "", "Error", "?"];
+var emptyMsg = [":)", " ", "No trains!", " "];
 var manualRefresh$ = new rxjs__WEBPACK_IMPORTED_MODULE_4__.Subject();
 var pauseRefresh$ = new rxjs__WEBPACK_IMPORTED_MODULE_4__.Subject();
 var timer$ = (0,rxjs__WEBPACK_IMPORTED_MODULE_5__.timer)(0, _helpers_system_js__WEBPACK_IMPORTED_MODULE_1__.REFRESH_RATE).pipe((0,rxjs__WEBPACK_IMPORTED_MODULE_6__.takeUntil)(pauseRefresh$));
@@ -4639,12 +4639,12 @@ var header = ["LINE", "CAR", "DEST", "MIN"];
 var stationBoard = null;
 var selectedId = "E09"; // All
 var selectedCodes = ["E09"];
-var selectedGroup = 1;
+var selectedTrack = 1;
 var selectedPlatform = 0;
 var stations = [];
 var arrivals = new Map();
 var template = function template() {
-  return "\n  <div class=\"station-label\"></div>\n  <div class=\"board-target\" id=\"board-1\"></div>\n  <div class=\"switch-target\">\n    <button class=\"btn-tracks\">Switch Tracks</button>\n    <button class=\"btn-platforms\" hidden>Switch Platforms</button>\n  </div>\n  <div class=\"list-target\"></div>\n";
+  return "\n  <div class=\"station-label\"></div>\n  <div class=\"board-target\"></div>\n  <div class=\"switch-target\">\n    <button class=\"btn-tracks\">Switch Tracks</button>\n    <button class=\"btn-platforms\" hidden>Switch Platforms</button>\n  </div>\n  <div class=\"list-target\"></div>\n";
 };
 var render = /*#__PURE__*/function () {
   var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
@@ -4662,7 +4662,7 @@ var render = /*#__PURE__*/function () {
 
           // Draw async content
           _context.next = 6;
-          return drawStationBoard(selectedGroup);
+          return drawStationBoard(selectedTrack);
         case 6:
           _context.next = 8;
           return drawStationList();
@@ -4693,7 +4693,7 @@ var pause = function pause() {
 var attachEventListeners = function attachEventListeners() {
   var trackButton = document.querySelector(".btn-tracks");
   trackButton.addEventListener("click", function () {
-    selectedGroup = selectedGroup === 1 ? 2 : 1;
+    selectedTrack = selectedTrack === 1 ? 2 : 1; // This is 1-indexed to match the track keys in the data
     manualRefresh$.next();
   });
   var platformButton = document.querySelector(".btn-platforms");
@@ -4713,7 +4713,7 @@ var drawStationBoard = /*#__PURE__*/function () {
       while (1) switch (_context3.prev = _context3.next) {
         case 0:
           _context3.prev = 0;
-          boardTarget = document.querySelector(".board-target#board-".concat(selectedGroup));
+          boardTarget = document.querySelector(".board-target");
           msgTable = []; // Draw board with p5.js
           stationBoard = new _components_stationBoard_js__WEBPACK_IMPORTED_MODULE_3__["default"](boardTarget, header, msgTable, selectedId, 1);
           new p5__WEBPACK_IMPORTED_MODULE_0__(stationBoard.sketch, boardTarget);
@@ -4739,7 +4739,7 @@ var drawStationBoard = /*#__PURE__*/function () {
                   return getUpdatedArrivals();
                 case 5:
                   arrivals = _context2.sent;
-                  if (arrivals === null || selectedCodes === null || selectedPlatform === null || selectedGroup === null) {
+                  if (arrivals === null || selectedCodes === null || selectedPlatform === null || selectedTrack === null) {
                     msgTable = [errorMsg];
                   } else if (arrivals.length === 0) {
                     msgTable = [emptyMsg];
@@ -4750,7 +4750,7 @@ var drawStationBoard = /*#__PURE__*/function () {
                     } else {
                       platformButton.setAttribute("hidden", true);
                     }
-                    msgTable = getCurrentMsgTable(selectedCodes[selectedPlatform], selectedGroup);
+                    msgTable = getCurrentMsgTable(selectedCodes[selectedPlatform], selectedTrack);
                   }
                   stationBoard.data$.next({
                     msgTable: msgTable,
@@ -4767,8 +4767,8 @@ var drawStationBoard = /*#__PURE__*/function () {
         case 11:
           _context3.prev = 11;
           _context3.t0 = _context3["catch"](0);
-          console.error("Failed to draw station board ".concat(selectedGroup, ":"), _context3.t0);
-          container = document.querySelector(".board-target#board-".concat(selectedGroup));
+          console.error("Failed to draw station board ".concat(selectedTrack, ":"), _context3.t0);
+          container = document.querySelector(".board-target#board-".concat(selectedTrack));
           container.innerHTML = "<div class=\"error\">Failed to load position data</div>";
         case 16:
         case "end":
@@ -4960,7 +4960,7 @@ var getCurrentMsgTable = function getCurrentMsgTable(platformId, groupId) {
   var station = arrivals.get(platformId.toString());
   var group = station === null || station === void 0 ? void 0 : station.get(groupId.toString());
   return group ? group.map(function (a) {
-    return [a.Line, a.Car, a.Destination, a.Min];
+    return [a.Line, a.Car, a.DestinationName, a.Min];
   }) : [[errorMsg]];
 };
 
@@ -5157,8 +5157,6 @@ var StationBoard = /*#__PURE__*/function (_DotMatrix) {
                 self.destroy$.subscribe(function () {
                   console.log("destroying...");
                 });
-
-                // console.log("DotMatrixSketch: p5.js setup function executed!");
               };
               p.draw = function () {
                 p.scale(self.scale);
@@ -5170,8 +5168,6 @@ var StationBoard = /*#__PURE__*/function (_DotMatrix) {
                 if (!_this.isInTransition || _this.transitionPhase === "in") {
                   _this.drawTable(p);
                 }
-
-                // console.log("DotMatrixSketch: p5.js draw function executed!");
               };
             case 3:
             case "end":
@@ -5286,8 +5282,8 @@ var StationBoard = /*#__PURE__*/function (_DotMatrix) {
             return;
           }
 
-          // Skip rendering the hidden column or null strings
-          if (str === null || _this.columnHidden && colIndex === _this.columnToHide) {
+          // Skip rendering the hidden column
+          if (_this.columnHidden && colIndex === _this.columnToHide) {
             continue;
           }
           var _this$calcStartPos = _this.calcStartPos(rowIndex, adjustedColIndex),
@@ -5296,7 +5292,8 @@ var StationBoard = /*#__PURE__*/function (_DotMatrix) {
           var charStartX = startX;
           var isTyping = typewriter.isActive && typewriter.rowIndex === rowIndex && typewriter.colIndex === colIndex;
           var charLimit = isTyping ? typewriter.currentChar : maxMsgLength;
-          var _iterator2 = _createForOfIteratorHelper(str.slice(0, charLimit)),
+          var strSanitized = str || "-";
+          var _iterator2 = _createForOfIteratorHelper(strSanitized.slice(0, charLimit)),
             _step2;
           try {
             for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
