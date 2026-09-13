@@ -8,8 +8,8 @@ import { getOrInitializeMapValue } from "../helpers/helpers.js";
 import StationBoard from "../components/stationBoard.js";
 
 const headingText = "Stations";
-const errorMsg = [":(", "", "Error", ""];
-const emptyMsg = [":)", "", "No trains!", ""];
+const errorMsg = [":(", "", "Error", "?"];
+const emptyMsg = [":)", " ", "No trains!", " "];
 
 const manualRefresh$ = new Subject();
 const pauseRefresh$ = new Subject();
@@ -20,7 +20,7 @@ const header = ["LINE", "CAR", "DEST", "MIN"];
 let stationBoard = null;
 let selectedId = "E09"; // All
 let selectedCodes = ["E09"];
-let selectedGroup = 1;
+let selectedTrack = 1;
 let selectedPlatform = 0;
 let stations = [];
 let arrivals = new Map();
@@ -28,7 +28,7 @@ let arrivals = new Map();
 const template = () => {
   return `
   <div class="station-label"></div>
-  <div class="board-target" id="board-1"></div>
+  <div class="board-target"></div>
   <div class="switch-target">
     <button class="btn-tracks">Switch Tracks</button>
     <button class="btn-platforms" hidden>Switch Platforms</button>
@@ -47,7 +47,7 @@ export const render = async () => {
   container.innerHTML = template();
 
   // Draw async content
-  await drawStationBoard(selectedGroup);
+  await drawStationBoard(selectedTrack);
   await drawStationList();
 
   attachEventListeners();
@@ -67,7 +67,7 @@ export const pause = () => {
 const attachEventListeners = () => {
   const trackButton = document.querySelector(".btn-tracks");
   trackButton.addEventListener("click", () => {
-    selectedGroup = selectedGroup === 1 ? 2 : 1;
+    selectedTrack = selectedTrack === 1 ? 2 : 1; // This is 1-indexed to match the track keys in the data
     manualRefresh$.next();
   });
 
@@ -83,7 +83,7 @@ const attachEventListeners = () => {
  */
 const drawStationBoard = async () => {
   try {
-    const boardTarget = document.querySelector(`.board-target#board-${selectedGroup}`);
+    const boardTarget = document.querySelector(`.board-target`);
     let msgTable = [];
 
     // Draw board with p5.js
@@ -100,7 +100,7 @@ const drawStationBoard = async () => {
 
       arrivals = await getUpdatedArrivals();
 
-      if (arrivals === null || selectedCodes === null || selectedPlatform === null || selectedGroup === null) {
+      if (arrivals === null || selectedCodes === null || selectedPlatform === null || selectedTrack === null) {
         msgTable = [errorMsg];
       } else if (arrivals.length === 0) {
         msgTable = [emptyMsg];
@@ -112,14 +112,14 @@ const drawStationBoard = async () => {
           platformButton.setAttribute("hidden", true);
         }
 
-        msgTable = getCurrentMsgTable(selectedCodes[selectedPlatform], selectedGroup);
+        msgTable = getCurrentMsgTable(selectedCodes[selectedPlatform], selectedTrack);
       }
 
       stationBoard.data$.next({ msgTable, stationId: selectedId });
     });
   } catch (error) {
-    console.error(`Failed to draw station board ${selectedGroup}:`, error);
-    const container = document.querySelector(`.board-target#board-${selectedGroup}`);
+    console.error(`Failed to draw station board ${selectedTrack}:`, error);
+    const container = document.querySelector(`.board-target#board-${selectedTrack}`);
     container.innerHTML = `<div class="error">Failed to load position data</div>`;
   }
 };
@@ -210,7 +210,7 @@ const getCurrentMsgTable = (platformId, groupId) => {
   const station = arrivals.get(platformId.toString());
   const group = station?.get(groupId.toString());
 
-  return group ? group.map((a) => [a.Line, a.Car, a.Destination, a.Min]) : [[errorMsg]];
+  return group ? group.map((a) => [a.Line, a.Car, a.DestinationName, a.Min]) : [[errorMsg]];
 };
 
 /**
