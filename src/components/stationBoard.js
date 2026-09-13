@@ -121,11 +121,11 @@ class StationBoard extends DotMatrix {
                 tap(() => {
                   console.log("updating message table");
                   self.msgTable = msgTable;
-                })
+                }),
               ),
-              this.doTransition$(p, msgTable, stationId)
-            ).pipe(tap(() => p.redraw()))
-          )
+              this.doTransition$(p, msgTable, stationId),
+            ).pipe(tap(() => p.redraw())),
+          ),
         )
         .subscribe();
 
@@ -133,8 +133,6 @@ class StationBoard extends DotMatrix {
       self.destroy$.subscribe(() => {
         console.log("destroying...");
       });
-
-      // console.log("DotMatrixSketch: p5.js setup function executed!");
     };
 
     p.draw = () => {
@@ -148,8 +146,6 @@ class StationBoard extends DotMatrix {
       if (!this.isInTransition || this.transitionPhase === "in") {
         this.drawTable(p);
       }
-
-      // console.log("DotMatrixSketch: p5.js draw function executed!");
     };
   };
 
@@ -186,7 +182,7 @@ class StationBoard extends DotMatrix {
       }),
       finalize(() => {
         this.isInTransition = false;
-      })
+      }),
     );
   };
 
@@ -201,7 +197,7 @@ class StationBoard extends DotMatrix {
 
     return from(table).pipe(
       concatMap((row, rowIndex) => this.typeRow$(p, row, rowIndex + offset)),
-      finalize(() => (this.typewriterState.isActive = false))
+      finalize(() => (this.typewriterState.isActive = false)),
     );
   };
 
@@ -210,7 +206,7 @@ class StationBoard extends DotMatrix {
 
     return of(row).pipe(
       concatMap((cols) => from(cols)),
-      concatMap((col, colIndex) => this.typeCell$(p, col, colIndex))
+      concatMap((col, colIndex) => this.typeCell$(p, col, colIndex)),
     );
   };
 
@@ -226,9 +222,9 @@ class StationBoard extends DotMatrix {
           tap(() => {
             this.typewriterState.currentChar += 1;
             p.redraw();
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
   };
 
@@ -302,7 +298,7 @@ class StationBoard extends DotMatrix {
 
     // Calculate hug widths based on adjusted columns
     const hugWidths = adjustedHeadings.map((text, i) =>
-      adjustedLayout[i] === "hug" ? (this.getMsgLength(text) + colGap) * this.dotUnit : 0
+      adjustedLayout[i] === "hug" ? (this.getMsgLength(text) + colGap) * this.dotUnit : 0,
     );
     const totalHugWidth = hugWidths.reduce((sum, w) => sum + w, 0);
 
