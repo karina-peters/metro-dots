@@ -1,4 +1,4 @@
-# Metro Visualizer
+# Metro Dots
 
 A set of realtime visualations for the DC Metro system based on data from various [WMATA APIs](https://developer.wmata.com/apis). It's still a work in progress, but you can check it out here: [https://metro-vis.netlify.app/](https://metro-vis.netlify.app/).
 
