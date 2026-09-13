@@ -5,7 +5,7 @@ const template = () => {
   return `
     <div class="hero">
       <div class="wrapper">
-        <h1 class="title">Metro Visualizer</h1>
+        <h1 class="title">Metro Dots</h1>
         <div class="button-wrapper">
           <button id="btn-stn">Stations</button>
           <button id="btn-train">Trains</button>

@@ -1,6 +1,6 @@
-# Metro Visualizer
+# Metro Dots
 
-A set of realtime visualations for the DC Metro system based on data from various [WMATA APIs](https://developer.wmata.com/apis). It's still a work in progress, but you can check it out here: [https://metro-vis.netlify.app/](https://metro-vis.netlify.app/).
+A set of realtime visualations for the DC Metro system based on data from various [WMATA APIs](https://developer.wmata.com/apis). It's still a work in progress, but you can check it out here: [https://metro-dots.com](https://metro-dots.com/).
 
 ## Getting Started
 
@@ -20,8 +20,8 @@ npm (v9+ recommended)
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/karina-peters/metro-map.git
-cd metro-map
+git clone https://github.com/karina-peters/metro-dots.git
+cd metro-dots
 npm install
 ```
 

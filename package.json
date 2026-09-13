@@ -1,5 +1,5 @@
 {
-  "name": "metro-map",
+  "name": "metro-dots",
   "version": "1.0.0",
   "description": "",
   "main": "server/server.js",
@@ -14,15 +14,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/karina-peters/metro-map.git"
+    "url": "git+https://github.com/karina-peters/metro-dots.git"
   },
   "keywords": [],
   "author": "Karina Peters",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/karina-peters/metro-map/issues"
+    "url": "https://github.com/karina-peters/metro-dots/issues"
   },
-  "homepage": "https://github.com/karina-peters/metro-map#readme",
+  "homepage": "https://github.com/karina-peters/metro-dots#readme",
   "devDependencies": {
     "@babel/core": "^7.26.10",
     "@babel/preset-env": "^7.26.9",
