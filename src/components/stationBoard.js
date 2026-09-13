@@ -262,8 +262,8 @@ class StationBoard extends DotMatrix {
         return;
       }
 
-      // Skip rendering the hidden column or null strings
-      if (str === null || (this.columnHidden && colIndex === this.columnToHide)) {
+      // Skip rendering the hidden column
+      if (this.columnHidden && colIndex === this.columnToHide) {
         continue;
       }
 
@@ -272,8 +272,9 @@ class StationBoard extends DotMatrix {
 
       const isTyping = typewriter.isActive && typewriter.rowIndex === rowIndex && typewriter.colIndex === colIndex;
       const charLimit = isTyping ? typewriter.currentChar : maxMsgLength;
+      const strSanitized = str || "-";
 
-      for (const char of str.slice(0, charLimit)) {
+      for (const char of strSanitized.slice(0, charLimit)) {
         const charColor = colIndex === 1 && char === "8" ? dotColor.highlight : color;
         this.renderChar(p, char, charStartX, startY, charColor);
         charStartX += (charWidth + charGap) * this.dotUnit;
