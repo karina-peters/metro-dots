@@ -542,9 +542,15 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.content-target {
 
   .list-target {
     margin: 0.5rem 0;
+    gap: 0.25rem;
+  }
+
+  .btn-train {
+    cursor: pointer;
+    width: 3.25rem;
   }
 }
-`, "",{"version":3,"sources":["webpack://./src/styles/trains.css"],"names":[],"mappings":"AAAA;EACE,cAAc;AAChB;;AAEA;EACE,aAAa;EACb,mBAAmB;EACnB,WAAW;EACX,cAAc;EACd,mBAAmB;AACrB;;AAEA;EACE,eAAe;EACf,WAAW;AACb;;AAEA;EACE,cAAc;EACd,iBAAiB;EACjB,yBAAyB;EACzB,oBAAoB;AACtB;;AAEA;EACE;IACE,eAAe;EACjB;;EAEA;IACE,gBAAgB;EAClB;AACF","sourcesContent":[".content-target {\n  margin: 2rem 0;\n}\n\n.list-target {\n  display: flex;\n  flex-flow: row wrap;\n  gap: 0.5rem;\n  margin: 2rem 0;\n  align-items: center;\n}\n\n.btn-train {\n  cursor: pointer;\n  width: 4rem;\n}\n\n.train-label {\n  margin: 1rem 0;\n  font-size: 1.5rem;\n  text-transform: uppercase;\n  align-self: flex-end;\n}\n\n@media screen and (max-width: 768px) {\n  .train-label {\n    font-size: 1rem;\n  }\n\n  .list-target {\n    margin: 0.5rem 0;\n  }\n}\n"],"sourceRoot":""}]);
+`, "",{"version":3,"sources":["webpack://./src/styles/trains.css"],"names":[],"mappings":"AAAA;EACE,cAAc;AAChB;;AAEA;EACE,aAAa;EACb,mBAAmB;EACnB,WAAW;EACX,cAAc;EACd,mBAAmB;AACrB;;AAEA;EACE,eAAe;EACf,WAAW;AACb;;AAEA;EACE,cAAc;EACd,iBAAiB;EACjB,yBAAyB;EACzB,oBAAoB;AACtB;;AAEA;EACE;IACE,eAAe;EACjB;;EAEA;IACE,gBAAgB;IAChB,YAAY;EACd;;EAEA;IACE,eAAe;IACf,cAAc;EAChB;AACF","sourcesContent":[".content-target {\n  margin: 2rem 0;\n}\n\n.list-target {\n  display: flex;\n  flex-flow: row wrap;\n  gap: 0.5rem;\n  margin: 2rem 0;\n  align-items: center;\n}\n\n.btn-train {\n  cursor: pointer;\n  width: 4rem;\n}\n\n.train-label {\n  margin: 1rem 0;\n  font-size: 1.5rem;\n  text-transform: uppercase;\n  align-self: flex-end;\n}\n\n@media screen and (max-width: 768px) {\n  .train-label {\n    font-size: 1rem;\n  }\n\n  .list-target {\n    margin: 0.5rem 0;\n    gap: 0.25rem;\n  }\n\n  .btn-train {\n    cursor: pointer;\n    width: 3.25rem;\n  }\n}\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -839,18 +845,25 @@ body {
   font-family: "Helvetica Neue", -apple-system, sans-serif;
   color: var(--color-text-light);
   background-color: var(--color-background);
-  margin: 0;
-  padding: 2rem;
-  height: 100vh;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  margin: 0;
+}
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  width: 100vw;
+  flex: 1;
+  box-sizing: border-box;
 }
 
 main {
-  display: flex;
-  flex-flow: column;
-  padding: 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 button {
@@ -931,17 +944,21 @@ header h1 {
 /*         OTHER STYLES       */
 /* ========================== */
 
-/* TODO: make responsive */
 @media screen and (max-width: 768px) {
   header h1 {
     font-size: 1.25rem;
   }
 
+  .app-wrapper {
+    padding: 1rem;
+  }
+
   button {
     font-size: 1rem;
+    padding: 0.4rem 0.8rem;
   }
 }
-`, "",{"version":3,"sources":["webpack://./src/styles.css"],"names":[],"mappings":"AAAA,+BAA+B;AAC/B,+BAA+B;AAC/B,+BAA+B;;AAE/B;EACE,uBAAuB;EACvB,uBAAuB;EACvB,yBAAyB;EACzB,wBAAwB;EACxB,2BAA2B;EAC3B,kBAAkB;EAClB,kBAAkB;EAClB,kBAAkB;EAClB,kBAAkB;EAClB,kBAAkB;EAClB,kBAAkB;EAClB,uBAAuB;AACzB;;AAEA,+BAA+B;AAC/B,+BAA+B;AAC/B,+BAA+B;;AAE/B;EACE,wDAAwD;EACxD,8BAA8B;EAC9B,yCAAyC;EACzC,SAAS;EACT,aAAa;EACb,aAAa;EACb,aAAa;EACb,sBAAsB;AACxB;;AAEA;EACE,aAAa;EACb,iBAAiB;EACjB,UAAU;EACV,OAAO;AACT;;AAEA;EACE,uBAAuB;EACvB,6BAA6B;EAC7B,mCAAmC;EACnC,oBAAoB;EACpB,kBAAkB;EAClB,YAAY;EACZ,yBAAyB;AAC3B;AACA;EACE,sBAAsB;AACxB;;AAEA;EACE,sBAAsB;EACtB,8BAA8B;AAChC;AACA;EACE,sBAAsB;AACxB;AACA;EACE,gCAAgC;EAChC,8BAA8B;AAChC;AACA;EACE,gCAAgC;EAChC,8BAA8B;AAChC;AACA;EACE,gCAAgC;EAChC,8BAA8B;AAChC;AACA;EACE,gCAAgC;EAChC,6BAA6B;AAC/B;AACA;EACE,gCAAgC;EAChC,6BAA6B;AAC/B;AACA;EACE,gCAAgC;EAChC,6BAA6B;AAC/B;AACA;EACE,oBAAoB;EACpB,yCAAyC;AAC3C;;AAEA;EACE,wBAAwB;AAC1B;;AAEA,+BAA+B;AAC/B,+BAA+B;AAC/B,+BAA+B;;AAE/B;EACE,aAAa;EACb,cAAc;EACd,mBAAmB;EACnB,SAAS;EACT,mBAAmB;EACnB,8BAA8B;AAChC;;AAEA;EACE,8BAA8B;EAC9B,SAAS;EACT,kBAAkB;EAClB,gBAAgB;EAChB,yBAAyB;AAC3B;;AAEA,+BAA+B;AAC/B,+BAA+B;AAC/B,+BAA+B;;AAE/B,0BAA0B;AAC1B;EACE;IACE,kBAAkB;EACpB;;EAEA;IACE,eAAe;EACjB;AACF","sourcesContent":["/* ========================== */\n/*          VARIABLES         */\n/* ========================== */\n\n:root {\n  --color-header: #0b0500;\n  --color-footer: #0b0500;\n  --color-background: black;\n  --color-text-dark: black;\n  --color-text-light: #faf9f6;\n  --line-GR: #38b000;\n  --line-RD: #d90429;\n  --line-OR: #fb6107;\n  --line-YL: #ffd700;\n  --line-SV: #b2b4b2;\n  --line-BL: #3772ff;\n  --border-radius: 0.5rem;\n}\n\n/* ========================== */\n/*      GENERAL STYLES        */\n/* ========================== */\n\nbody {\n  font-family: \"Helvetica Neue\", -apple-system, sans-serif;\n  color: var(--color-text-light);\n  background-color: var(--color-background);\n  margin: 0;\n  padding: 2rem;\n  height: 100vh;\n  display: flex;\n  flex-direction: column;\n}\n\nmain {\n  display: flex;\n  flex-flow: column;\n  padding: 0;\n  flex: 1;\n}\n\nbutton {\n  background-color: white;\n  color: var(--color-text-dark);\n  border-radius: var(--border-radius);\n  padding: 0.5rem 1rem;\n  font-size: 1.25rem;\n  border: none;\n  text-transform: uppercase;\n}\nbutton:hover {\n  background-color: #eee;\n}\n\n.btn-dark {\n  background-color: #222;\n  color: var(--color-text-light);\n}\n.btn-dark:hover {\n  background-color: #333;\n}\n.btn-dark.line-GR:hover {\n  background-color: var(--line-GR);\n  color: var(--color-text-light);\n}\n.btn-dark.line-RD:hover {\n  background-color: var(--line-RD);\n  color: var(--color-text-light);\n}\n.btn-dark.line-BL:hover {\n  background-color: var(--line-BL);\n  color: var(--color-text-light);\n}\n.btn-dark.line-OR:hover {\n  background-color: var(--line-OR);\n  color: var(--color-text-dark);\n}\n.btn-dark.line-YL:hover {\n  background-color: var(--line-YL);\n  color: var(--color-text-dark);\n}\n.btn-dark.line-SV:hover {\n  background-color: var(--line-SV);\n  color: var(--color-text-dark);\n}\n.btn-dark.selected {\n  pointer-events: none;\n  background-color: var(--color-background);\n}\n\n[hidden] {\n  display: none !important;\n}\n\n/* ========================== */\n/*        HEADER & NAV        */\n/* ========================== */\n\nheader {\n  display: flex;\n  flex-flow: row;\n  align-items: center;\n  gap: 1rem;\n  margin-bottom: 1rem;\n  color: var(--color-text-light);\n}\n\nheader h1 {\n  color: var(--color-text-light);\n  margin: 0;\n  font-size: 1.75rem;\n  font-weight: 400;\n  text-transform: uppercase;\n}\n\n/* ========================== */\n/*         OTHER STYLES       */\n/* ========================== */\n\n/* TODO: make responsive */\n@media screen and (max-width: 768px) {\n  header h1 {\n    font-size: 1.25rem;\n  }\n\n  button {\n    font-size: 1rem;\n  }\n}\n"],"sourceRoot":""}]);
+`, "",{"version":3,"sources":["webpack://./src/styles.css"],"names":[],"mappings":"AAAA,+BAA+B;AAC/B,+BAA+B;AAC/B,+BAA+B;;AAE/B;EACE,uBAAuB;EACvB,uBAAuB;EACvB,yBAAyB;EACzB,wBAAwB;EACxB,2BAA2B;EAC3B,kBAAkB;EAClB,kBAAkB;EAClB,kBAAkB;EAClB,kBAAkB;EAClB,kBAAkB;EAClB,kBAAkB;EAClB,uBAAuB;AACzB;;AAEA,+BAA+B;AAC/B,+BAA+B;AAC/B,+BAA+B;;AAE/B;EACE,wDAAwD;EACxD,8BAA8B;EAC9B,yCAAyC;EACzC,aAAa;EACb,sBAAsB;EACtB,aAAa;EACb,SAAS;AACX;;AAEA;EACE,aAAa;EACb,sBAAsB;EACtB,aAAa;EACb,YAAY;EACZ,OAAO;EACP,sBAAsB;AACxB;;AAEA;EACE,OAAO;EACP,aAAa;EACb,sBAAsB;AACxB;;AAEA;EACE,uBAAuB;EACvB,6BAA6B;EAC7B,mCAAmC;EACnC,oBAAoB;EACpB,kBAAkB;EAClB,YAAY;EACZ,yBAAyB;AAC3B;AACA;EACE,sBAAsB;AACxB;;AAEA;EACE,sBAAsB;EACtB,8BAA8B;AAChC;AACA;EACE,sBAAsB;AACxB;AACA;EACE,gCAAgC;EAChC,8BAA8B;AAChC;AACA;EACE,gCAAgC;EAChC,8BAA8B;AAChC;AACA;EACE,gCAAgC;EAChC,8BAA8B;AAChC;AACA;EACE,gCAAgC;EAChC,6BAA6B;AAC/B;AACA;EACE,gCAAgC;EAChC,6BAA6B;AAC/B;AACA;EACE,gCAAgC;EAChC,6BAA6B;AAC/B;AACA;EACE,oBAAoB;EACpB,yCAAyC;AAC3C;;AAEA;EACE,wBAAwB;AAC1B;;AAEA,+BAA+B;AAC/B,+BAA+B;AAC/B,+BAA+B;;AAE/B;EACE,aAAa;EACb,cAAc;EACd,mBAAmB;EACnB,SAAS;EACT,mBAAmB;EACnB,8BAA8B;AAChC;;AAEA;EACE,8BAA8B;EAC9B,SAAS;EACT,kBAAkB;EAClB,gBAAgB;EAChB,yBAAyB;AAC3B;;AAEA,+BAA+B;AAC/B,+BAA+B;AAC/B,+BAA+B;;AAE/B;EACE;IACE,kBAAkB;EACpB;;EAEA;IACE,aAAa;EACf;;EAEA;IACE,eAAe;IACf,sBAAsB;EACxB;AACF","sourcesContent":["/* ========================== */\n/*          VARIABLES         */\n/* ========================== */\n\n:root {\n  --color-header: #0b0500;\n  --color-footer: #0b0500;\n  --color-background: black;\n  --color-text-dark: black;\n  --color-text-light: #faf9f6;\n  --line-GR: #38b000;\n  --line-RD: #d90429;\n  --line-OR: #fb6107;\n  --line-YL: #ffd700;\n  --line-SV: #b2b4b2;\n  --line-BL: #3772ff;\n  --border-radius: 0.5rem;\n}\n\n/* ========================== */\n/*      GENERAL STYLES        */\n/* ========================== */\n\nbody {\n  font-family: \"Helvetica Neue\", -apple-system, sans-serif;\n  color: var(--color-text-light);\n  background-color: var(--color-background);\n  display: flex;\n  flex-direction: column;\n  height: 100vh;\n  margin: 0;\n}\n\n.app-wrapper {\n  display: flex;\n  flex-direction: column;\n  padding: 2rem;\n  width: 100vw;\n  flex: 1;\n  box-sizing: border-box;\n}\n\nmain {\n  flex: 1;\n  display: flex;\n  flex-direction: column;\n}\n\nbutton {\n  background-color: white;\n  color: var(--color-text-dark);\n  border-radius: var(--border-radius);\n  padding: 0.5rem 1rem;\n  font-size: 1.25rem;\n  border: none;\n  text-transform: uppercase;\n}\nbutton:hover {\n  background-color: #eee;\n}\n\n.btn-dark {\n  background-color: #222;\n  color: var(--color-text-light);\n}\n.btn-dark:hover {\n  background-color: #333;\n}\n.btn-dark.line-GR:hover {\n  background-color: var(--line-GR);\n  color: var(--color-text-light);\n}\n.btn-dark.line-RD:hover {\n  background-color: var(--line-RD);\n  color: var(--color-text-light);\n}\n.btn-dark.line-BL:hover {\n  background-color: var(--line-BL);\n  color: var(--color-text-light);\n}\n.btn-dark.line-OR:hover {\n  background-color: var(--line-OR);\n  color: var(--color-text-dark);\n}\n.btn-dark.line-YL:hover {\n  background-color: var(--line-YL);\n  color: var(--color-text-dark);\n}\n.btn-dark.line-SV:hover {\n  background-color: var(--line-SV);\n  color: var(--color-text-dark);\n}\n.btn-dark.selected {\n  pointer-events: none;\n  background-color: var(--color-background);\n}\n\n[hidden] {\n  display: none !important;\n}\n\n/* ========================== */\n/*        HEADER & NAV        */\n/* ========================== */\n\nheader {\n  display: flex;\n  flex-flow: row;\n  align-items: center;\n  gap: 1rem;\n  margin-bottom: 1rem;\n  color: var(--color-text-light);\n}\n\nheader h1 {\n  color: var(--color-text-light);\n  margin: 0;\n  font-size: 1.75rem;\n  font-weight: 400;\n  text-transform: uppercase;\n}\n\n/* ========================== */\n/*         OTHER STYLES       */\n/* ========================== */\n\n@media screen and (max-width: 768px) {\n  header h1 {\n    font-size: 1.25rem;\n  }\n\n  .app-wrapper {\n    padding: 1rem;\n  }\n\n  button {\n    font-size: 1rem;\n    padding: 0.4rem 0.8rem;\n  }\n}\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -5053,7 +5070,7 @@ var transitionDelay = 200;
 
 // Sizing (px)
 var dotRadius = 4;
-var dotGap = 0.5;
+var dotGap = 1;
 
 // Board Dimensions (dot count)
 var charGap = 1;
@@ -5087,7 +5104,7 @@ var StationBoard = /*#__PURE__*/function (_DotMatrix) {
       var baseWidth = _this.numCols * _this.dotUnit - _this.dotGap;
       _this.columnHidden = window.innerWidth < _this.breakpointHide;
       if (window.innerWidth < _this.breakpointScale) {
-        _this.scale = (window.innerWidth - /* body padding */64) / baseWidth;
+        _this.scale = (window.innerWidth - /* body padding */32) / baseWidth;
       } else {
         _this.scale = 1;
         _this.numCols = Math.max(_this.calcMinBoardWidth(), Math.floor(_this.parentElt.clientWidth / _this.dotUnit));
@@ -5284,8 +5301,8 @@ var StationBoard = /*#__PURE__*/function (_DotMatrix) {
           try {
             for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
               var _char2 = _step2.value;
-              // TODO: make the 8 car lime green like on the real boards
-              _this.renderChar(p, _char2, charStartX, startY, color);
+              var charColor = colIndex === 1 && _char2 === "8" ? _helpers_colors_js__WEBPACK_IMPORTED_MODULE_0__.dotColor.highlight : color;
+              _this.renderChar(p, _char2, charStartX, startY, charColor);
               charStartX += (charWidth + charGap) * _this.dotUnit;
             }
           } catch (err) {
@@ -5435,10 +5452,10 @@ var textColor = {
   light: "white"
 };
 var dotColor = {
-  on: "#FFB700",
+  on: "#EBB100",
   off: "#111111",
   heading: "#EF1800",
-  highlight: "#C3EF00"
+  highlight: "#9BD400"
 };
 
 /***/ }),
@@ -6804,12 +6821,12 @@ function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e 
 // Timing (ms)
 var pauseDuration = 2500;
 var scrollPause = 1500;
-var scrollSpeed = 50;
+var scrollSpeed = 40;
 var transitionDelay = 200;
 
 // Sizing (px)
 var dotRadius = 4;
-var dotGap = 0.5;
+var dotGap = 1;
 
 // Dimensions (dot count)
 var charGap = 1;
@@ -6842,7 +6859,7 @@ var TrainBoard = /*#__PURE__*/function (_DotMatrix) {
       // Handle responsiveness
       var baseWidth = _this.numCols * _this.dotUnit - _this.dotGap;
       if (window.innerWidth < _this.breakpoint) {
-        _this.scale = (window.innerWidth - /* body padding */64) / baseWidth;
+        _this.scale = (window.innerWidth - /* body padding */32) / baseWidth;
       } else {
         _this.scale = 1;
         _this.numCols = Math.floor(_this.parentElt.clientWidth / _this.dotUnit);
@@ -6854,8 +6871,8 @@ var TrainBoard = /*#__PURE__*/function (_DotMatrix) {
         bottom: (numRows - paddingY - msgMargin) * _this.dotUnit - _this.dotGap,
         left: (paddingX + bumperWidth + msgMargin) * _this.dotUnit
       };
-      var width = _this.numCols * _this.dotUnit - _this.dotGap;
-      var height = numRows * _this.dotUnit - _this.dotGap;
+      var width = _this.scale * _this.numCols * _this.dotUnit - _this.dotGap;
+      var height = _this.scale * numRows * _this.dotUnit - _this.dotGap;
       _this.canvasSize = {
         width: width,
         height: height
