@@ -37,7 +37,8 @@ app.use(
 
       // List of allowed origins
       const allowedOrigins = [
-        "https://metro-vis.netlify.app",
+        "https://metro-dots.netlify.app",
+        "https://www.metro-dots.com",
         "https://metro-dots.com",
         "http://localhost:3000",
         "http://localhost:8080",
