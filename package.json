@@ -10,6 +10,7 @@
     "server:dev": "node server/server.js",
     "client:dev": "webpack-dev-server",
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "test": "jest",
     "start": "npm run build && npm run dev"
   },
   "repository": {
@@ -29,6 +30,7 @@
     "@babel/register": "^7.25.9",
     "babel-loader": "^10.0.0",
     "css-loader": "^7.1.2",
+    "jest": "^30.5.1",
     "style-loader": "^4.0.0",
     "webpack": "^5.98.0",
     "webpack-cli": "^6.0.1",
