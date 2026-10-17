@@ -1,4 +1,8 @@
 reference/
-node_modules
+node_modules/
+dist/
 *.pem
-server/.env
+.env
+public/data
+# Local Netlify folder
+.netlify

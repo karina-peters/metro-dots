@@ -3,7 +3,7 @@ import p5 from "p5";
 
 import { REFRESH_RATE } from "../helpers/system.js";
 import { metroSystem } from "../helpers/system.js";
-import { getOrInitializeMapValue } from "../helpers/helpers.js";
+import { getOrInitializeMapValue } from "../helpers/utils.js";
 
 import StationBoard from "../components/stationBoard.js";
 

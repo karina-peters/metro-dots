@@ -1,0 +1,3 @@
+[build]
+  command = "node scripts/build-data.js && webpack --mode production"
+  publish = "dist"
