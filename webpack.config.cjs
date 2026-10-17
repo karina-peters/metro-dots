@@ -1,4 +1,5 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 const path = require("path");
 const webpack = require("webpack");
 
@@ -6,23 +7,15 @@ module.exports = {
   mode: "none",
   entry: "./src/app.js",
   output: {
-    path: __dirname + "/dist",
+    path: path.join(__dirname, "dist"),
     filename: "bundle.js",
+    clean: true, // remove stale files from dist
   },
   devServer: {
     static: {
       directory: path.join(__dirname, "dist"),
     },
     port: 8080, // Frontend dev server port
-    proxy: [
-      {
-        context: ["/api"],
-        target: "http://localhost:3001/", // Backend server address
-        secure: false,
-        changeOrigin: true,
-        logLevel: "debug",
-      },
-    ],
     hot: true,
   },
   module: {
@@ -53,8 +46,8 @@ module.exports = {
       template: path.join(__dirname, "public/index.html"),
       inject: true,
     }),
-    new webpack.DefinePlugin({
-      "process.env.VITE_API_URL": JSON.stringify(process.env.VITE_API_URL || "http://localhost:3001"),
+    new CopyWebpackPlugin({
+      patterns: [{ from: "public/data", to: "data" }],
     }),
   ],
 };

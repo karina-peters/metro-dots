@@ -1,12 +1,10 @@
-import { getOrInitializeMapValue } from "./helpers.js";
+import { getOrInitializeMapValue, fetchJsonData } from "./utils.js";
 
 export const REFRESH_RATE = 8000;
 export const REGIONS = {
   ALL: "All",
   DC: "DC",
 };
-
-const BASE_URL = process.env.VITE_API_URL || "http://localhost:3000";
 
 class SystemService {
   constructor() {
@@ -28,7 +26,7 @@ class SystemService {
 
     const name = this.stnCodeToName.get(code);
     if (!name) {
-      throw new Error("Code not found");
+      throw new Error(`Station code${code} not found`);
     }
 
     return name;
@@ -43,7 +41,7 @@ class SystemService {
 
     const currentCkt = circuits?.find((c) => c.id === cktId);
     if (!currentCkt) {
-      console.warn(`Circuit [${cktId}] is undefined`);
+      console.warn(`Circuit[${cktId}] is undefined`);
       return null;
     }
 
@@ -58,7 +56,7 @@ class SystemService {
     });
 
     if (!nextStnCkt) {
-      console.error("Station not found");
+      console.error(`Next station circuit for circuit[${cktId}] not found`);
     }
 
     return nextStnCkt;
@@ -69,77 +67,25 @@ class SystemService {
 
     const circuits = this.cktListCache.get(regionId);
     if (!circuits) {
-      throw new Error("Code not found");
+      throw new Error(`Circuits for region[${regionId}] not found`);
     }
 
     return Array.from(circuits.entries().map(([key, value]) => ({ lineId: key, circuits: value })));
   }
 
-  async fetchStations() {
-    const response = await fetch(`${BASE_URL}/api/stations`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
+  fetchStations = () => fetchJsonData("/data/stations.json");
 
-    if (!response.ok) {
-      throw new Error(response.statusText);
-    }
+  fetchines = () => fetchJsonData("/data/lines.json");
 
-    return await response.json().then((r) => r.data);
-  }
+  fetchRoutes = () => fetchJsonData("/data/routes.json");
 
-  async fetchLines() {
-    const response = await fetch(`${BASE_URL}/api/lines`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
+  fetchCircuits = (regionId) => fetchJsonData(`/data/circuits/${regionId}.json`);
 
-    if (!response.ok) {
-      throw new Error(response.statusText);
-    }
+  fetchArrivals = (stations) => fetchJsonData(`/api/arrivals/${[...new Set(stations)].sort().join(",")}`);
 
-    return await response.json().then((r) => r.data);
-  }
-
-  async fetchCircuits(params = undefined) {
-    const queryParams = new URLSearchParams(params);
-    const response = await fetch(`${BASE_URL}/api/circuits${params ? `?${queryParams}` : ""}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (!response.ok) {
-      throw new Error(response.statusText);
-    }
-
-    return await response.json().then((r) => r.data);
-  }
-
-  async fetchTrainPositions() {
-    const response = await fetch(`${BASE_URL}/api/trains`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (!response.ok) {
-      throw new Error(response.statusText);
-    }
-
-    return await response.json().then((r) => r.data.filter((t) => t.DestinationStationCode !== null).sort((a, b) => a.TrainId - b.TrainId));
-  }
-
-  async fetchArrivals(stations) {
-    const response = await fetch(`${BASE_URL}/api/arrivals/${stations.join(",")}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    if (!response.ok) {
-      throw new Error(response.statusText);
-    }
-
-    return await response.json().then((r) => r.data);
-  }
+  fetchTrainPositions = async () => {
+    return (await fetchJsonData("/api/trains")).filter((t) => t.DestinationStationCode !== null).sort((a, b) => a.TrainId - b.TrainId);
+  };
 
   async _loadStationNames() {
     const stations = await this.fetchStations();
@@ -157,9 +103,9 @@ class SystemService {
 
   async _loadCircuits() {
     for (const regionId of Object.values(REGIONS)) {
-      const cktsByLine = await this.fetchCircuits({ regionId: regionId });
+      const cktsByLine = await this.fetchCircuits(regionId);
 
-      if (cktsByLine === null || cktsByLine.length === 0) {
+      if (!cktsByLine || cktsByLine.length === 0) {
         console.error(`Circuit information for region ${regionId} is missing!`);
         return;
       }

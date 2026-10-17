@@ -6,12 +6,12 @@
   "private": "true",
   "type": "module",
   "scripts": {
-    "build": "webpack",
-    "server:dev": "node server/server.js",
-    "client:dev": "webpack-dev-server",
-    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
-    "test": "jest",
-    "start": "npm run build && npm run dev"
+    "build": "node scripts/build-data.js && webpack --mode production",
+    "build:data": "node --env-file=.env scripts/build-data.js",
+    "dev": "netlify dev",
+    "dev:client": "npm run build:data && webpack serve",
+    "start": "npm run build:data && npm run dev",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -37,6 +37,7 @@
     "webpack-dev-server": "^5.2.1"
   },
   "dependencies": {
+    "@netlify/functions": "^6.0.2",
     "concurrently": "^9.1.2",
     "copy-webpack-plugin": "^13.0.0",
     "cors": "^2.8.5",

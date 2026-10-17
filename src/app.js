@@ -8,17 +8,17 @@ import { state$ } from "./helpers/state.js";
 import { metroSystem } from "./helpers/system.js";
 
 import { render as renderHome } from "./views/home.js";
-import { pause as pauseMap, render as renderMap } from "./views/map.js";
 import { pause as pauseStations, render as renderStations } from "./views/stations.js";
-import { render as renderLines } from "./views/lines.js";
 import { pause as pauseTrains, render as renderTrains } from "./views/trains.js";
+// import { pause as pauseMap, render as renderMap } from "./views/map.js";
+// import { render as renderLines } from "./views/lines.js";
 
 const views = {
   "home": { render: renderHome },
-  "map": { render: renderMap, pause: pauseMap },
   "station": { render: renderStations, pause: pauseStations },
-  "line": { render: renderLines },
   "train": { render: renderTrains, pause: pauseTrains },
+  // "map": { render: renderMap, pause: pauseMap },
+  // "line": { render: renderLines },
 };
 
 let currentViewId = "";
