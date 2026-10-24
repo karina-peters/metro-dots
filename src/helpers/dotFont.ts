@@ -1,4 +1,6 @@
-export const fontData = {
+type CharacterBitmap = number[][];
+
+const fontDataObject = {
   " ": [
     [0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0],
@@ -432,3 +434,8 @@ export const fontData = {
     [0, 0, 0, 0, 0],
   ],
 };
+
+export const fontData = new Map<string, CharacterBitmap>(Object.entries(fontDataObject));
+
+export const FONT_WIDTH = fontDataObject[" "][0].length;
+export const FONT_HEIGHT = fontDataObject[" "].length;

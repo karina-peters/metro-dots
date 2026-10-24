@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { fetchStandardRoutes, deriveCircuitsByRegion, deriveLines } from "./utils.js";
+import { fetchStandardRoutes, deriveLines } from "./utils.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PUBLIC_DATA = path.join(root, "public", "data");
@@ -22,21 +22,12 @@ async function main() {
   ]);
 
   const lines = deriveLines(routes);
-  const circuitsByRegion = deriveCircuitsByRegion(regions, lines);
-
-  const circuits = Object.entries(circuitsByRegion).map(([regionId, byLine]) => [
-    path.join(PUBLIC_DATA, "circuits", `${regionId}.json`),
-    {
-      data: Object.entries(byLine).map(([lineId, circuits]) => ({ lineId, regionId, circuits })),
-    },
-  ]);
 
   const outputsFiles = [
-    [path.join(PUBLIC_DATA, "stations.json"), { data: stations.map((s) => ({ code: s.Code, name: s.Name })) }],
+    [path.join(PUBLIC_DATA, "stations.json"), { data: stations.map((s) => ({ id: s.id, code: s.code, name: s.name })) }],
     [path.join(PUBLIC_DATA, "lines.json"), { data: [...lines.keys()] }],
     [path.join(PUBLIC_DATA, "routes.json"), { data: routes }],
     ...regions.map((r) => [path.join(PUBLIC_DATA, "regions", `${r.Id}.json`), { data: r }]),
-    ...circuits,
   ];
 
   await rm(PUBLIC_DATA, { recursive: true, force: true });

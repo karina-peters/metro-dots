@@ -1,6 +1,6 @@
 const LIVE_REFRESH_INTERVAL = 4;
 
-export const OK = (data) =>
+export const OK = (data: any) =>
   Response.json(
     { data },
     {
@@ -11,4 +11,4 @@ export const OK = (data) =>
     },
   );
 
-export const Error = (status, message) => Response.json({ message }, { status, headers: { "Cache-Control": "no-store" } });
+export const Error = (status: number, message: string) => Response.json({ message }, { status, headers: { "Cache-Control": "no-store" } });

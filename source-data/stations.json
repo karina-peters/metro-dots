@@ -1,410 +1,512 @@
 [
   {
-    "Code": "A01",
-    "Name": "Metro Center"
+    "id": "metro-center",
+    "code": "A01",
+    "name": "Metro Center"
   },
   {
-    "Code": "A02",
-    "Name": "Farragut North"
+    "id": "farragut-north",
+    "code": "A02",
+    "name": "Farragut North"
   },
   {
-    "Code": "A03",
-    "Name": "Dupont Circle"
+    "id": "dupont-circle",
+    "code": "A03",
+    "name": "Dupont Circle"
   },
   {
-    "Code": "A04",
-    "Name": "Woodley Park-Zoo/Adams Morgan"
+    "id": "woodley-park",
+    "code": "A04",
+    "name": "Woodley Park-Zoo/Adams Morgan"
   },
   {
-    "Code": "A05",
-    "Name": "Cleveland Park"
+    "id": "cleveland-park",
+    "code": "A05",
+    "name": "Cleveland Park"
   },
   {
-    "Code": "A06",
-    "Name": "Van Ness-UDC"
+    "id": "van-ness-udc",
+    "code": "A06",
+    "name": "Van Ness-UDC"
   },
   {
-    "Code": "A07",
-    "Name": "Tenleytown-AU"
+    "id": "tenleytown-au",
+    "code": "A07",
+    "name": "Tenleytown-AU"
   },
   {
-    "Code": "A08",
-    "Name": "Friendship Heights"
+    "id": "friendship-heights",
+    "code": "A08",
+    "name": "Friendship Heights"
   },
   {
-    "Code": "A09",
-    "Name": "Bethesda"
+    "id": "bethesda",
+    "code": "A09",
+    "name": "Bethesda"
   },
   {
-    "Code": "A10",
-    "Name": "Medical Center"
+    "id": "medical-center",
+    "code": "A10",
+    "name": "Medical Center"
   },
   {
-    "Code": "A11",
-    "Name": "Grosvenor-Strathmore"
+    "id": "grosvenor-strathmore",
+    "code": "A11",
+    "name": "Grosvenor-Strathmore"
   },
   {
-    "Code": "A12",
-    "Name": "North Bethesda"
+    "id": "north-bethesda",
+    "code": "A12",
+    "name": "North Bethesda"
   },
   {
-    "Code": "A13",
-    "Name": "Twinbrook"
+    "id": "twinbrook",
+    "code": "A13",
+    "name": "Twinbrook"
   },
   {
-    "Code": "A14",
-    "Name": "Rockville"
+    "id": "rockville",
+    "code": "A14",
+    "name": "Rockville"
   },
   {
-    "Code": "A15",
-    "Name": "Shady Grove"
+    "id": "shady-grove",
+    "code": "A15",
+    "name": "Shady Grove"
   },
   {
-    "Code": "B01",
-    "Name": "Gallery Pl-Chinatown"
+    "id": "gallery-pl-chinatown",
+    "code": "B01",
+    "name": "Gallery Pl-Chinatown"
   },
   {
-    "Code": "B02",
-    "Name": "Judiciary Square"
+    "id": "judiciary-square",
+    "code": "B02",
+    "name": "Judiciary Square"
   },
   {
-    "Code": "B03",
-    "Name": "Union Station"
+    "id": "union-station",
+    "code": "B03",
+    "name": "Union Station"
   },
   {
-    "Code": "B04",
-    "Name": "Rhode Island Ave-Brentwood"
+    "id": "rhode-island-ave-brentwood",
+    "code": "B04",
+    "name": "Rhode Island Ave-Brentwood"
   },
   {
-    "Code": "B05",
-    "Name": "Brookland-CUA"
+    "id": "brookland-cua",
+    "code": "B05",
+    "name": "Brookland-CUA"
   },
   {
-    "Code": "B06",
-    "Name": "Fort Totten"
+    "id": "fort-totten",
+    "code": "B06",
+    "name": "Fort Totten"
   },
   {
-    "Code": "B07",
-    "Name": "Takoma"
+    "id": "takoma",
+    "code": "B07",
+    "name": "Takoma"
   },
   {
-    "Code": "B08",
-    "Name": "Silver Spring"
+    "id": "silver-spring",
+    "code": "B08",
+    "name": "Silver Spring"
   },
   {
-    "Code": "B09",
-    "Name": "Forest Glen"
+    "id": "forest-glen",
+    "code": "B09",
+    "name": "Forest Glen"
   },
   {
-    "Code": "B10",
-    "Name": "Wheaton"
+    "id": "wheaton",
+    "code": "B10",
+    "name": "Wheaton"
   },
   {
-    "Code": "B11",
-    "Name": "Glenmont"
+    "id": "glenmont",
+    "code": "B11",
+    "name": "Glenmont"
   },
   {
-    "Code": "B35",
-    "Name": "NoMa-Gallaudet U"
+    "id": "noma-gallaudet-u",
+    "code": "B35",
+    "name": "NoMa-Gallaudet U"
   },
   {
-    "Code": "C01",
-    "Name": "Metro Center"
+    "id": "metro-center",
+    "code": "C01",
+    "name": "Metro Center"
   },
   {
-    "Code": "C02",
-    "Name": "McPherson Square"
+    "id": "mcpherson-square",
+    "code": "C02",
+    "name": "McPherson Square"
   },
   {
-    "Code": "C03",
-    "Name": "Farragut West"
+    "id": "farragut-west",
+    "code": "C03",
+    "name": "Farragut West"
   },
   {
-    "Code": "C04",
-    "Name": "Foggy Bottom-GWU"
+    "id": "foggy-bottom-gwu",
+    "code": "C04",
+    "name": "Foggy Bottom-GWU"
   },
   {
-    "Code": "C05",
-    "Name": "Rosslyn"
+    "id": "rosslyn",
+    "code": "C05",
+    "name": "Rosslyn"
   },
   {
-    "Code": "C06",
-    "Name": "Arlington Cemetery"
+    "id": "arlington-cemetery",
+    "code": "C06",
+    "name": "Arlington Cemetery"
   },
   {
-    "Code": "C07",
-    "Name": "Pentagon"
+    "id": "pentagon",
+    "code": "C07",
+    "name": "Pentagon"
   },
   {
-    "Code": "C08",
-    "Name": "Pentagon City"
+    "id": "pentagon-city",
+    "code": "C08",
+    "name": "Pentagon City"
   },
   {
-    "Code": "C09",
-    "Name": "Crystal City"
+    "id": "crystal-city",
+    "code": "C09",
+    "name": "Crystal City"
   },
   {
-    "Code": "C10",
-    "Name": "Ronald Reagan Washington National Airport"
+    "id": "reagan-national-airport",
+    "code": "C10",
+    "name": "Ronald Reagan Washington National Airport"
   },
   {
-    "Code": "C11",
-    "Name": "Potomac Yard"
+    "id": "potomac-yard",
+    "code": "C11",
+    "name": "Potomac Yard"
   },
   {
-    "Code": "C12",
-    "Name": "Braddock Road"
+    "id": "braddock-road",
+    "code": "C12",
+    "name": "Braddock Road"
   },
   {
-    "Code": "C13",
-    "Name": "King St-Old Town"
+    "id": "king-st-old-town",
+    "code": "C13",
+    "name": "King St-Old Town"
   },
   {
-    "Code": "C14",
-    "Name": "Eisenhower Avenue"
+    "id": "eisenhower-avenue",
+    "code": "C14",
+    "name": "Eisenhower Avenue"
   },
   {
-    "Code": "C15",
-    "Name": "Huntington"
+    "id": "huntington",
+    "code": "C15",
+    "name": "Huntington"
   },
   {
-    "Code": "D01",
-    "Name": "Federal Triangle"
+    "id": "federal-triangle",
+    "code": "D01",
+    "name": "Federal Triangle"
   },
   {
-    "Code": "D02",
-    "Name": "Smithsonian"
+    "id": "smithsonian",
+    "code": "D02",
+    "name": "Smithsonian"
   },
   {
-    "Code": "D03",
-    "Name": "L'Enfant Plaza"
+    "id": "lenfant-plaza",
+    "code": "D03",
+    "name": "L'Enfant Plaza"
   },
   {
-    "Code": "D04",
-    "Name": "Federal Center SW"
+    "id": "federal-center-sw",
+    "code": "D04",
+    "name": "Federal Center SW"
   },
   {
-    "Code": "D05",
-    "Name": "Capitol South"
+    "id": "capitol-south",
+    "code": "D05",
+    "name": "Capitol South"
   },
   {
-    "Code": "D06",
-    "Name": "Eastern Market"
+    "id": "eastern-market",
+    "code": "D06",
+    "name": "Eastern Market"
   },
   {
-    "Code": "D07",
-    "Name": "Potomac Ave"
+    "id": "potomac-ave",
+    "code": "D07",
+    "name": "Potomac Ave"
   },
   {
-    "Code": "D08",
-    "Name": "Stadium-Armory"
+    "id": "stadium-armory",
+    "code": "D08",
+    "name": "Stadium-Armory"
   },
   {
-    "Code": "D09",
-    "Name": "Minnesota Ave"
+    "id": "minnesota-ave",
+    "code": "D09",
+    "name": "Minnesota Ave"
   },
   {
-    "Code": "D10",
-    "Name": "Deanwood"
+    "id": "deanwood",
+    "code": "D10",
+    "name": "Deanwood"
   },
   {
-    "Code": "D11",
-    "Name": "Cheverly"
+    "id": "cheverly",
+    "code": "D11",
+    "name": "Cheverly"
   },
   {
-    "Code": "D12",
-    "Name": "Landover"
+    "id": "landover",
+    "code": "D12",
+    "name": "Landover"
   },
   {
-    "Code": "D13",
-    "Name": "New Carrollton"
+    "id": "new-carrollton",
+    "code": "D13",
+    "name": "New Carrollton"
   },
   {
-    "Code": "E01",
-    "Name": "Mt Vernon Sq 7th St-Convention Center"
+    "id": "mount-vernon-square",
+    "code": "E01",
+    "name": "Mt Vernon Sq 7th St-Convention Center"
   },
   {
-    "Code": "E02",
-    "Name": "Shaw-Howard U"
+    "id": "shaw-howard-u",
+    "code": "E02",
+    "name": "Shaw-Howard U"
   },
   {
-    "Code": "E03",
-    "Name": "U Street/African-Amer Civil War Memorial/Cardozo"
+    "id": "u-street",
+    "code": "E03",
+    "name": "U Street/African-Amer Civil War Memorial/Cardozo"
   },
   {
-    "Code": "E04",
-    "Name": "Columbia Heights"
+    "id": "columbia-heights",
+    "code": "E04",
+    "name": "Columbia Heights"
   },
   {
-    "Code": "E05",
-    "Name": "Georgia Ave-Petworth"
+    "id": "georgia-ave-petworth",
+    "code": "E05",
+    "name": "Georgia Ave-Petworth"
   },
   {
-    "Code": "E06",
-    "Name": "Fort Totten"
+    "id": "fort-totten",
+    "code": "E06",
+    "name": "Fort Totten"
   },
   {
-    "Code": "E07",
-    "Name": "West Hyattsville"
+    "id": "west-hyattsville",
+    "code": "E07",
+    "name": "West Hyattsville"
   },
   {
-    "Code": "E08",
-    "Name": "Hyattsville Crossing"
+    "id": "hyattsville-crossing",
+    "code": "E08",
+    "name": "Hyattsville Crossing"
   },
   {
-    "Code": "E09",
-    "Name": "College Park-U of Md"
+    "id": "college-park-u-of-md",
+    "code": "E09",
+    "name": "College Park-U of Md"
   },
   {
-    "Code": "E10",
-    "Name": "Greenbelt"
+    "id": "greenbelt",
+    "code": "E10",
+    "name": "Greenbelt"
   },
   {
-    "Code": "F01",
-    "Name": "Gallery Pl-Chinatown"
+    "id": "gallery-pl-chinatown",
+    "code": "F01",
+    "name": "Gallery Pl-Chinatown"
   },
   {
-    "Code": "F02",
-    "Name": "Archives-Navy Memorial-Penn Quarter"
+    "id": "archives",
+    "code": "F02",
+    "name": "Archives-Navy Memorial-Penn Quarter"
   },
   {
-    "Code": "F03",
-    "Name": "L'Enfant Plaza"
+    "id": "lenfant-plaza",
+    "code": "F03",
+    "name": "L'Enfant Plaza"
   },
   {
-    "Code": "F04",
-    "Name": "Waterfront"
+    "id": "waterfront",
+    "code": "F04",
+    "name": "Waterfront"
   },
   {
-    "Code": "F05",
-    "Name": "Navy Yard-Ballpark"
+    "id": "navy-yard-ballpark",
+    "code": "F05",
+    "name": "Navy Yard-Ballpark"
   },
   {
-    "Code": "F06",
-    "Name": "Anacostia"
+    "id": "anacostia",
+    "code": "F06",
+    "name": "Anacostia"
   },
   {
-    "Code": "F07",
-    "Name": "Congress Heights"
+    "id": "congress-heights",
+    "code": "F07",
+    "name": "Congress Heights"
   },
   {
-    "Code": "F08",
-    "Name": "Southern Avenue"
+    "id": "southern-avenue",
+    "code": "F08",
+    "name": "Southern Avenue"
   },
   {
-    "Code": "F09",
-    "Name": "Naylor Road"
+    "id": "naylor-road",
+    "code": "F09",
+    "name": "Naylor Road"
   },
   {
-    "Code": "F10",
-    "Name": "Suitland"
+    "id": "suitland",
+    "code": "F10",
+    "name": "Suitland"
   },
   {
-    "Code": "F11",
-    "Name": "Branch Ave"
+    "id": "branch-ave",
+    "code": "F11",
+    "name": "Branch Ave"
   },
   {
-    "Code": "G01",
-    "Name": "Benning Road"
+    "id": "benning-road",
+    "code": "G01",
+    "name": "Benning Road"
   },
   {
-    "Code": "G02",
-    "Name": "Capitol Heights"
+    "id": "capitol-heights",
+    "code": "G02",
+    "name": "Capitol Heights"
   },
   {
-    "Code": "G03",
-    "Name": "Addison Road-Seat Pleasant"
+    "id": "addison-road-seat-pleasant",
+    "code": "G03",
+    "name": "Addison Road-Seat Pleasant"
   },
   {
-    "Code": "G04",
-    "Name": "Morgan Boulevard"
+    "id": "morgan-boulevard",
+    "code": "G04",
+    "name": "Morgan Boulevard"
   },
   {
-    "Code": "G05",
-    "Name": "Downtown Largo"
+    "id": "downtown-largo",
+    "code": "G05",
+    "name": "Downtown Largo"
   },
   {
-    "Code": "J02",
-    "Name": "Van Dorn Street"
+    "id": "van-dorn-street",
+    "code": "J02",
+    "name": "Van Dorn Street"
   },
   {
-    "Code": "J03",
-    "Name": "Franconia-Springfield"
+    "id": "franconia-springfield",
+    "code": "J03",
+    "name": "Franconia-Springfield"
   },
   {
-    "Code": "K01",
-    "Name": "Court House"
+    "id": "court-house",
+    "code": "K01",
+    "name": "Court House"
   },
   {
-    "Code": "K02",
-    "Name": "Clarendon"
+    "id": "clarendon",
+    "code": "K02",
+    "name": "Clarendon"
   },
   {
-    "Code": "K03",
-    "Name": "Virginia Square-GMU"
+    "id": "virginia-square-gmu",
+    "code": "K03",
+    "name": "Virginia Square-GMU"
   },
   {
-    "Code": "K04",
-    "Name": "Ballston-MU"
+    "id": "ballston-mu",
+    "code": "K04",
+    "name": "Ballston-MU"
   },
   {
-    "Code": "K05",
-    "Name": "East Falls Church"
+    "id": "east-falls-church",
+    "code": "K05",
+    "name": "East Falls Church"
   },
   {
-    "Code": "K06",
-    "Name": "West Falls Church"
+    "id": "west-falls-church",
+    "code": "K06",
+    "name": "West Falls Church"
   },
   {
-    "Code": "K07",
-    "Name": "Dunn Loring-Merrifield"
+    "id": "dunn-loring-merrifield",
+    "code": "K07",
+    "name": "Dunn Loring-Merrifield"
   },
   {
-    "Code": "K08",
-    "Name": "Vienna/Fairfax-GMU"
+    "id": "vienna-fairfax-gmu",
+    "code": "K08",
+    "name": "Vienna/Fairfax-GMU"
   },
   {
-    "Code": "N01",
-    "Name": "McLean"
+    "id": "mclean",
+    "code": "N01",
+    "name": "McLean"
   },
   {
-    "Code": "N02",
-    "Name": "Tysons"
+    "id": "tysons",
+    "code": "N02",
+    "name": "Tysons"
   },
   {
-    "Code": "N03",
-    "Name": "Greensboro"
+    "id": "greensboro",
+    "code": "N03",
+    "name": "Greensboro"
   },
   {
-    "Code": "N04",
-    "Name": "Spring Hill"
+    "id": "spring-hill",
+    "code": "N04",
+    "name": "Spring Hill"
   },
   {
-    "Code": "N06",
-    "Name": "Wiehle-Reston East"
+    "id": "wiehle-reston-east",
+    "code": "N06",
+    "name": "Wiehle-Reston East"
   },
   {
-    "Code": "N07",
-    "Name": "Reston Town Center"
+    "id": "reston-town-center",
+    "code": "N07",
+    "name": "Reston Town Center"
   },
   {
-    "Code": "N08",
-    "Name": "Herndon"
+    "id": "herndon",
+    "code": "N08",
+    "name": "Herndon"
   },
   {
-    "Code": "N09",
-    "Name": "Innovation Center"
+    "id": "innovation-center",
+    "code": "N09",
+    "name": "Innovation Center"
   },
   {
-    "Code": "N10",
-    "Name": "Washington Dulles International Airport"
+    "id": "dulles-airport",
+    "code": "N10",
+    "name": "Washington Dulles International Airport"
   },
   {
-    "Code": "N11",
-    "Name": "Loudoun Gateway"
+    "id": "loudoun-gateway",
+    "code": "N11",
+    "name": "Loudoun Gateway"
   },
   {
-    "Code": "N12",
-    "Name": "Ashburn"
+    "id": "ashburn",
+    "code": "N12",
+    "name": "Ashburn"
   }
 ]

@@ -1,11 +1,10 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const path = require("path");
-const webpack = require("webpack");
 
 module.exports = {
   mode: "none",
-  entry: "./src/app.js",
+  entry: "./src/app.ts",
   output: {
     path: path.join(__dirname, "dist"),
     filename: "bundle.js",
@@ -25,12 +24,12 @@ module.exports = {
         use: ["style-loader", "css-loader"],
       },
       {
-        test: /\.js$/,
+        test: /\.[jt]s$/,
         exclude: /node_modules/,
         use: {
           loader: "babel-loader",
           options: {
-            presets: ["@babel/preset-env"],
+            presets: ["@babel/preset-env", "@babel/preset-typescript"],
           },
         },
       },
