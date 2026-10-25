@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "es2024",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["ESNext", "ES2024", "dom"],
+    "allowJs": true,
+    "checkJs": false, // existing .js stays unchecked until you convert it
+    "strict": true, // applies to .ts files from day one
+    "isolatedModules": true, // required because Babel compiles file-by-file
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true, // tsc only type-checks; your bundlers do the compiling
+    "skipLibCheck": true
+  },
+  "include": ["src", "scripts", "netlify", "shared"]
+}

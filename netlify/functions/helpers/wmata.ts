@@ -5,7 +5,7 @@ const stationCodes = new Set(stations.map((s) => s.Code));
 
 export class UpstreamError extends Error {}
 
-export async function wmataFetch(route) {
+export async function wmataFetch(route: string) {
   const { WMATA_HOST, WMATA_API_KEY } = process.env;
   if (!WMATA_HOST || !WMATA_API_KEY) {
     throw new Error("Missing WMATA_HOST or WMATA_API_KEY in the function environment");
@@ -14,20 +14,16 @@ export async function wmataFetch(route) {
   const url = new URL(`${WMATA_HOST}/${route}`);
   url.searchParams.set("contentType", "json");
 
-  try {
-    const response = await fetch(url, {
-      headers: { api_key: WMATA_API_KEY },
-      signal: AbortSignal.timeout(TIMEOUT_LENGTH),
-    });
+  const response = await fetch(url, {
+    headers: { api_key: WMATA_API_KEY },
+    signal: AbortSignal.timeout(TIMEOUT_LENGTH),
+  });
 
-    if (!response.ok) {
-      throw new UpstreamError(`WMATA responded with ${response.status}`);
-    }
-
-    return response.json();
-  } catch (err) {
-    throw new UpstreamError(`WMATA request failed: ${err.message}`);
+  if (!response.ok) {
+    throw new UpstreamError(`WMATA responded with ${response.status}`);
   }
+
+  return response.json();
 }
 
-export const isValidStation = (code) => stationCodes.has(code);
+export const isValidStation = (code: string) => stationCodes.has(code);

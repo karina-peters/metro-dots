@@ -5,9 +5,10 @@ export default async () => {
   try {
     const json = await wmataFetch("TrainPositions/TrainPositions");
     return OK(json.TrainPositions);
-  } catch (err) {
-    console.error("trains failed:", err.message);
-    return Error(err instanceof UpstreamError ? 502 : 500, "Unable to fetch train positions");
+  } catch (error: any) {
+    const errorStr = "Unable to fetch train positions";
+    console.error(`${errorStr}: `, error.message);
+    return Error(error instanceof UpstreamError ? 502 : 500, errorStr);
   }
 };
 

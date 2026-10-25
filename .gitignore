@@ -4,5 +4,5 @@ dist/
 *.pem
 .env
 public/data
-# Local Netlify folder
+.vscode
 .netlify

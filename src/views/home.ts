@@ -1,4 +1,5 @@
-import { navigateTo } from "../helpers/state.js";
+import { navigateTo } from "../helpers/state.ts";
+import { getElement } from "../helpers/utils.ts";
 
 const headingText = "Home";
 const template = () => {
@@ -17,38 +18,21 @@ const template = () => {
   `;
 };
 
-(() => {
-  // Fetch data
-  // etc.
-})();
-
-export const render = () => {
-  // Render heading text
-  const textElement = document.querySelector(".header-target .heading-text");
-  textElement.textContent = headingText;
-
-  // Render template
-  const container = document.querySelector(".content-target");
-  container.innerHTML = template();
+export function render() {
+  getElement(".header-target .heading-text").textContent = headingText;
+  getElement(".content-target").innerHTML = template();
 
   attachEventListeners();
-};
+}
 
-/**
- * Attaches all required event listeners
- */
 const attachEventListeners = () => {
   // Stations
-  const stationButton = document.querySelector("#btn-stn");
-  stationButton.addEventListener("click", () => {
-    navigateTo("station");
-  });
+  const stationButton = getElement("#btn-stn");
+  stationButton.addEventListener("click", () => navigateTo("station"));
 
   // Trains
-  const trainButton = document.querySelector("#btn-train");
-  trainButton.addEventListener("click", () => {
-    navigateTo("train");
-  });
+  const trainButton = getElement("#btn-train");
+  trainButton.addEventListener("click", () => navigateTo("train"));
 
   // // Lines
   // const lineButton = document.querySelector("#btn-line");
