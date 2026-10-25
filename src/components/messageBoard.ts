@@ -10,51 +10,46 @@ import {
   delay,
   distinctUntilChanged,
   forkJoin,
-  BehaviorSubject,
   Subscription,
   catchError,
   EMPTY,
   Subject,
 } from "rxjs";
 
-import { BACKGROUND_COLOR, DotColor, LineColor } from "../models/colors.model.ts";
-import { FONT_HEIGHT, FONT_WIDTH } from "../helpers/dotFont.ts";
+import { DotColor } from "../models/colors.model.ts";
 import { SlideDirection, TransitionPhase } from "../models/board.model.ts";
-import type { MessageBoardData, CanvasSize, DotPosition } from "../models/board.model.ts";
+import type { MessageBoardData, DotPosition } from "../models/board.model.ts";
+
+import { Dot, BoardDefault, MessageBoardConfig, PAGE_PADDING_PX } from "../config/board.config.ts";
+import { FONT_HEIGHT, FONT_WIDTH } from "../helpers/dotFont.ts";
 
 import DotMatrix, { getMessageLength } from "./dotMatrix.ts";
-import { Dot, BoardDefault, MessageBoardConfig, PAGE_PADDING_PX } from "../config/board.config.ts";
 
 const DEFAULT_MESSAGE_INDEX = 0;
 
 class MessageBoard extends DotMatrix {
   public data$: Subject<MessageBoardData> = new Subject<MessageBoardData>();
+  public sketch = this.createSketch();
 
   // Data
   private messages: string[];
   private currentMsgIndex = 0;
   private currentMessage = "";
-  private trainId: string | undefined; // TODO - change to dataId
+  private dataId: string | undefined;
   private bumperColor: string = DotColor.Off;
 
   // Board State
   private messageTimer$: Subscription | null = null;
   private scrollOffset = 0;
   private isScrolling = false;
-  private isInTransition = true;
-  private transitionPhase = TransitionPhase.None;
   private slideOffset = 0;
   private isSliding = false;
   private bumperOffset = 0;
   private isBumping = true;
 
-  // Sizing
-  private scale = 1;
-  private canvasSize: CanvasSize = { width: 0, height: 0 };
-
   private parentElt: HTMLElement;
 
-  constructor(parentElt: HTMLElement, messages: string[], lineId: string, trainId: string) {
+  constructor(parentElt: HTMLElement, messages: string[]) {
     super(MessageBoardConfig.Height, BoardDefault.Width);
 
     this.parentElt = parentElt;
@@ -66,7 +61,7 @@ class MessageBoard extends DotMatrix {
     this.setCanvasSize();
   }
 
-  setCanvasSize() {
+  protected override setCanvasSize() {
     if (window.innerWidth < MessageBoardConfig.BreakpointScale) {
       // Scale entire board
       this.dotColumnCount = BoardDefault.Width;
@@ -83,61 +78,54 @@ class MessageBoard extends DotMatrix {
     };
 
     this.textField = {
-      top: BoardDefault.PaddingY + MessageBoardConfig.MessageMargin,
-      right: (this.dotColumnCount - MessageBoardConfig.BumperWidth - MessageBoardConfig.MessageMargin) * this.dotUnit - this.dotGap,
-      bottom: (this.dotRowCount - BoardDefault.PaddingY - MessageBoardConfig.MessageMargin) * this.dotUnit - this.dotGap,
-      left: (MessageBoardConfig.BumperWidth + MessageBoardConfig.MessageMargin) * this.dotUnit,
+      top: BoardDefault.PaddingY + BoardDefault.MessageMargin,
+      right: (this.dotColumnCount - MessageBoardConfig.BumperWidth - BoardDefault.MessageMargin) * this.dotUnit - this.dotGap,
+      bottom: (this.dotRowCount - BoardDefault.PaddingY - BoardDefault.MessageMargin) * this.dotUnit - this.dotGap,
+      left: (MessageBoardConfig.BumperWidth + BoardDefault.MessageMargin) * this.dotUnit,
     };
   }
 
-  sketch = (p: p5) => {
-    // Call p5.js functions
-    p.setup = () => {
-      p.createCanvas(this.canvasSize.width, this.canvasSize.height);
-      p.noLoop();
+  protected override setupSubscriptions(p: p5): void {
+    super.setupSubscriptions(p);
 
-      p.windowResized = () => {
-        this.setCanvasSize();
-
-        p.resizeCanvas(this.canvasSize.width, this.canvasSize.height);
-        p.redraw();
-      };
-
-      this.data$
-        .pipe(
-          tap(({ messages }) => (this.messages = messages)),
-          distinctUntilChanged((prev, curr) => prev.trainId === curr.trainId),
-          switchMap(({ trainId, lineCode }) =>
-            this.doTransition$(p, trainId, lineCode).pipe(
-              tap(() => this.startMessageTimer(p)),
-              catchError((err) => {
-                console.error("Board transition failed:", err);
-                return EMPTY;
-              }),
-            ),
+    this.data$
+      .pipe(
+        tap(({ messages }) => (this.messages = messages)),
+        distinctUntilChanged((prev, curr) => prev.dataId === curr.dataId),
+        switchMap(({ dataId, bumperColor }) =>
+          this.doTransition$(p, dataId, bumperColor).pipe(
+            tap(() => this.startMessageTimer(p)),
+            catchError((err) => {
+              console.error("Board transition failed:", err);
+              return EMPTY;
+            }),
           ),
-          takeUntil(this.destroy$),
-        )
-        .subscribe();
+        ),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
+  }
 
-      this.destroy$.subscribe(() => {
-        console.log("destroying...");
-      });
-    };
+  protected override drawContent(p: p5): void {
+    let { xPos, yPos } = this.calcStartPosition();
 
-    p.draw = () => {
-      p.scale(this.scale);
-      p.background(BACKGROUND_COLOR);
-      p.noFill();
+    if (this.isScrolling) {
+      xPos -= this.scrollOffset * this.dotUnit;
+    }
 
-      // Draw the current state
-      this.drawBoard(p);
+    if (this.isSliding) {
+      // TODO: handle different directions
+      yPos = yPos + (this.slideOffset - FONT_HEIGHT - BoardDefault.MessageMargin - BoardDefault.PaddingY) * this.dotUnit;
+    }
 
-      if (!this.isInTransition || this.transitionPhase === TransitionPhase.In) {
-        this.drawMessage(p);
-      }
-    };
-  };
+    let messageWidth = 0;
+    for (const char of this.currentMessage) {
+      const charStartX = xPos + messageWidth;
+      this.renderChar(p, char, charStartX, yPos, DotColor.On);
+
+      messageWidth += this.dotUnit * (FONT_WIDTH + BoardDefault.CharGap);
+    }
+  }
 
   /**
    * Start or restart the message display timer
@@ -166,13 +154,13 @@ class MessageBoard extends DotMatrix {
   }
 
   /**
-   * Starts transition animation for newly selected train
+   * Starts transition animation for newly selected data
    * @param p - p5.js instance
-   * @param newTrainId - Train id of the newly selected train
-   * @param newLineId - Line id of the newly selected train
+   * @param newDataId - id of the newly selected data
+   * @param newBumperColor - bumper color for the newly selected data
    * @returns an Observable of the transition animation
    */
-  doTransition$ = (p: p5, newTrainId: string | undefined, newLineId: string | undefined) => {
+  private doTransition$ = (p: p5, newDataId: string | undefined, newBumperColor: string | undefined) => {
     this.isInTransition = true;
     this.clearSubscriptions();
 
@@ -180,14 +168,14 @@ class MessageBoard extends DotMatrix {
       takeUntil(this.destroy$),
       switchMap(() => {
         this.transitionPhase = TransitionPhase.Out;
-        return this.trainId ? this.animateBumpers$(p) : of(null);
+        return this.dataId ? this.animateBumpers$(p) : of(null);
       }),
       tap(() => {
         this.transitionPhase = TransitionPhase.Change;
-        console.log(`changing from train ${this.trainId} to ${newTrainId}`);
+        console.log(`changing from ${this.dataId} to ${newDataId}`);
 
-        this.bumperColor = LineColor.get(newLineId || "") || DotColor.Off;
-        this.trainId = newTrainId;
+        this.bumperColor = newBumperColor || DotColor.Off;
+        this.dataId = newDataId;
         this.setMessage(DEFAULT_MESSAGE_INDEX);
       }),
       delay(MessageBoardConfig.TransitionDelayMs),
@@ -207,13 +195,13 @@ class MessageBoard extends DotMatrix {
    * Start scrolling animation for a message that doesn't fit on the display
    * @param p - p5.js instance
    */
-  scrollMessage$ = (p: p5) => {
+  private scrollMessage$ = (p: p5) => {
     console.log("scrolling...");
 
     return this.createScrollAnimation(p, {
       speed: MessageBoardConfig.ScrollSpeedMs,
       step: MessageBoardConfig.ScrollStep,
-      totalDistance: getMessageLength(this.currentMessage) + MessageBoardConfig.BumperWidth + 2 * MessageBoardConfig.MessageMargin,
+      totalDistance: getMessageLength(this.currentMessage) + MessageBoardConfig.BumperWidth + 2 * BoardDefault.MessageMargin,
       onStart: () => {
         this.isScrolling = true;
       },
@@ -227,13 +215,13 @@ class MessageBoard extends DotMatrix {
     });
   };
 
-  slideMessageIn$ = (p: p5, /* TODO */ direction: SlideDirection) => {
+  private slideMessageIn$ = (p: p5, /* TODO */ direction: SlideDirection) => {
     console.log("sliding message in...");
 
     return this.createScrollAnimation(p, {
       speed: MessageBoardConfig.ScrollSpeedMs,
       step: MessageBoardConfig.ScrollStep,
-      totalDistance: FONT_HEIGHT + BoardDefault.PaddingY + MessageBoardConfig.MessageMargin,
+      totalDistance: FONT_HEIGHT + BoardDefault.PaddingY + BoardDefault.MessageMargin,
       onStart: () => {
         this.isSliding = true;
       },
@@ -247,7 +235,7 @@ class MessageBoard extends DotMatrix {
     });
   };
 
-  splitMessageIn$ = () => {
+  private splitMessageIn$ = () => {
     // TODO - add an animation to make the top half of the message slide in from to top and the bottom from the bottom
   };
 
@@ -256,7 +244,7 @@ class MessageBoard extends DotMatrix {
    * @param p - p5.js instance
    * @returns
    */
-  animateBumpers$ = (p: p5) => {
+  private animateBumpers$ = (p: p5) => {
     console.log(`animating bumpers ${this.transitionPhase}...`);
 
     return this.createScrollAnimation(p, {
@@ -276,6 +264,7 @@ class MessageBoard extends DotMatrix {
     });
   };
 
+  // TODO: handle in base class, pass in spec
   drawBoard(p: p5): void {
     let dotX = this.dotRadius;
     let dotY = this.dotRadius;
@@ -308,27 +297,6 @@ class MessageBoard extends DotMatrix {
     }
   }
 
-  drawMessage(p: p5): void {
-    let { xPos, yPos } = this.calcStartPosition();
-
-    if (this.isScrolling) {
-      xPos -= this.scrollOffset * this.dotUnit;
-    }
-
-    if (this.isSliding) {
-      // TODO: handle different directions
-      yPos = yPos + (this.slideOffset - FONT_HEIGHT - MessageBoardConfig.MessageMargin - BoardDefault.PaddingY) * this.dotUnit;
-    }
-
-    let messageWidth = 0;
-    for (const char of this.currentMessage) {
-      const charStartX = xPos + messageWidth;
-      this.renderChar(p, char, charStartX, yPos, DotColor.On);
-
-      messageWidth += this.dotUnit * (FONT_WIDTH + BoardDefault.CharGap);
-    }
-  }
-
   /**
    * Calculate the starting position for drawing the message
    * Centers short messages and positions overflow messages for scrolling
@@ -337,13 +305,13 @@ class MessageBoard extends DotMatrix {
    */
   private calcStartPosition(): DotPosition {
     let startX = this.dotRadius + MessageBoardConfig.BumperWidth * this.dotUnit;
-    let startY = this.dotUnit * (BoardDefault.PaddingY + MessageBoardConfig.MessageMargin) + this.dotRadius;
+    let startY = this.dotUnit * (BoardDefault.PaddingY + BoardDefault.MessageMargin) + this.dotRadius;
     let msgLength = getMessageLength(this.currentMessage);
 
     if (!this.messageOverflow(this.currentMessage)) {
       startX += Math.floor((this.dotColumnCount - MessageBoardConfig.BumperWidth * 2 - msgLength) / 2) * this.dotUnit; // Center align
     } else {
-      startX += MessageBoardConfig.MessageMargin * this.dotUnit; // Left align with padding
+      startX += BoardDefault.MessageMargin * this.dotUnit; // Left align with padding
     }
 
     return { xPos: startX, yPos: startY };

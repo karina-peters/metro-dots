@@ -1,16 +1,11 @@
+import p5 from "p5";
 import { interval, tap, finalize, Subject, takeUntil, take, last } from "rxjs";
 
-import p5 from "p5";
+import { CanvasSize, TransitionPhase } from "../models/board.model.ts";
+import { BACKGROUND_COLOR, DotColor } from "../models/colors.model.ts";
 
-import { DotColor } from "../models/colors.model.ts";
+import { BoardDefault, Dot } from "../config/board.config.ts";
 import { fontData, FONT_WIDTH } from "../helpers/dotFont.ts";
-import { Dot } from "../config/board.config.ts";
-
-// Dimensions (dot count)
-const charGap = 1;
-const paddingX = 0;
-const paddingY = 2;
-const msgMargin = 2;
 
 interface Animation {
   speed: number;
@@ -21,44 +16,81 @@ interface Animation {
   onStart: Function;
 }
 
-class DotMatrix {
-  destroy$: Subject<void> = new Subject<void>();
-  dotRadius: number;
-  dotGap: number;
-  dotUnit: number;
-  dotColumnCount: number;
-  dotRowCount: number;
-  textField: { top: number; right: number; bottom: number; left: number };
+abstract class DotMatrix {
+  public destroy$: Subject<void> = new Subject<void>();
+
+  protected dotRadius: number = Dot.Radius;
+  protected dotGap: number = Dot.Gap;
+  protected dotUnit: number = Dot.Unit;
+  protected dotColumnCount: number;
+  protected dotRowCount: number;
+  protected textField: { top: number; right: number; bottom: number; left: number };
+  protected scale: number = 1;
+  protected canvasSize: CanvasSize = { width: 0, height: 0 };
+  protected isInTransition = true;
+  protected transitionPhase = TransitionPhase.None;
 
   /**
    * Construct new instance of DotMatrix
    * @param numRows - Number of dot rows on board
    * @param numCols - Number of dot columns on board
-   * @param dotRadius - Dot radius in pixels
-   * @param dotGap - Space between dots in pixels
    */
   constructor(numRows: number, numCols: number) {
-    // Sizing
-    this.dotRadius = Dot.Radius;
-    this.dotGap = Dot.Gap;
-    this.dotUnit = Dot.Unit;
     this.dotColumnCount = numCols;
     this.dotRowCount = numRows;
+
     this.textField = {
-      top: paddingY * this.dotUnit,
-      right: (this.dotColumnCount - paddingX - msgMargin) * this.dotUnit - this.dotGap,
-      bottom: (this.dotRowCount - paddingY - msgMargin) * this.dotUnit - this.dotGap,
-      left: (paddingX + msgMargin) * this.dotUnit,
+      top: BoardDefault.PaddingY * this.dotUnit,
+      right: (this.dotColumnCount - BoardDefault.PaddingX - BoardDefault.MessageMargin) * this.dotUnit - this.dotGap,
+      bottom: (this.dotRowCount - BoardDefault.PaddingY - BoardDefault.MessageMargin) * this.dotUnit - this.dotGap,
+      left: (BoardDefault.PaddingX + BoardDefault.MessageMargin) * this.dotUnit,
     };
+  }
+
+  protected abstract setCanvasSize(): void;
+  protected abstract drawContent(p: p5): void;
+
+  /**
+   * Standardized p5 setup wrapper
+   */
+  protected createSketch() {
+    return (p: p5) => {
+      p.setup = () => {
+        p.createCanvas(this.canvasSize.width, this.canvasSize.height);
+        p.noLoop();
+
+        p.windowResized = () => {
+          this.setCanvasSize();
+          p.resizeCanvas(this.canvasSize.width, this.canvasSize.height);
+          p.redraw();
+        };
+
+        this.setupSubscriptions(p);
+      };
+
+      p.draw = () => {
+        p.scale(this.scale);
+        p.background(BACKGROUND_COLOR);
+        p.noFill();
+
+        this.drawBoard(p);
+        this.drawContent(p);
+      };
+    };
+  }
+
+  protected setupSubscriptions(p: p5) {
+    this.destroy$.subscribe(() => {
+      console.log("destroying...");
+    });
   }
 
   /**
    * Generalized offset animation for scroll or bumper transition
-   * (modified from consolidation of previous redundant startScroll and startBumperAnimation functions by ChatGPT)
    * @param p - p5.js instance
    * @param a - animation options
    */
-  createScrollAnimation = (p: p5, a: Animation) => {
+  protected createScrollAnimation = (p: p5, a: Animation) => {
     a.onStart();
 
     return interval(a.speed).pipe(
@@ -79,7 +111,7 @@ class DotMatrix {
    * Draw the dot matrix board background with highlight color
    * @param p - p5.js instance
    */
-  drawBoard(p: p5) {
+  protected drawBoard(p: p5) {
     let dotX = this.dotRadius;
     let dotY = this.dotRadius;
 
@@ -108,7 +140,7 @@ class DotMatrix {
    * @param startY - Starting Y position in pixels
    * @param color - Color to render the char in
    */
-  renderChar(p: p5, char: string, startX: number, startY: number, color: string) {
+  protected renderChar(p: p5, char: string, startX: number, startY: number, color: string) {
     const charMatrix = fontData.get(char.toUpperCase()) || fontData.get(" ") || []; // Default to space if character not found
     const { top, right, bottom, left } = this.textField;
 
@@ -136,7 +168,7 @@ class DotMatrix {
    * @param message - The message to check
    * @returns True if the message needs to scroll, false otherwise
    */
-  messageOverflow(message: string): boolean {
+  protected messageOverflow(message: string): boolean {
     const msgWidth = getMessageLength(message);
     const visibleWidth = (this.textField.right - this.textField.left + this.dotGap) / this.dotUnit;
 
@@ -150,7 +182,7 @@ class DotMatrix {
  * @returns Length of the message in dot matrix columns
  */
 export function getMessageLength(message: string): number {
-  return message.length * (FONT_WIDTH + charGap) - charGap;
+  return message.length * (FONT_WIDTH + BoardDefault.CharGap) - BoardDefault.CharGap;
 }
 
 export default DotMatrix;

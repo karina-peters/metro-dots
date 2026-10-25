@@ -28,13 +28,13 @@ export type BoardLayout = {
 
 export type TableBoardData = {
   messageTable: string[][];
-  stationId: string | undefined;
+  dataId: string | undefined;
 };
 
 export type MessageBoardData = {
   messages: string[];
-  lineCode: string | undefined;
-  trainId: string | undefined;
+  bumperColor: string | undefined;
+  dataId: string | undefined;
 };
 
 export type CanvasSize = {
@@ -47,8 +47,22 @@ export type DotPosition = {
   yPos: number;
 };
 
-export type ColumnSpec = {
+export type TableColumnSpec = {
   index: number;
   text: string;
   type: ColumnType;
+};
+
+export type TableLayoutInput = {
+  availableSpace: number;
+  dotUnit: number;
+  dotGap: number;
+  minWidthWide: number;
+  minWidthNarrow: number;
+};
+
+export type TableLayout = {
+  columnHidden: boolean;
+  dotColumnCount: number;
+  scale: number;
 };

@@ -1,5 +1,4 @@
 import p5 from "p5";
-
 import {
   tap,
   switchMap,
@@ -10,18 +9,18 @@ import {
   finalize,
   from,
   map,
-  BehaviorSubject,
   EMPTY,
   catchError,
   distinctUntilChanged,
   Subject,
 } from "rxjs";
 
-import { BACKGROUND_COLOR, DotColor } from "../models/colors.model.ts";
-import { FONT_HEIGHT, FONT_WIDTH } from "../helpers/dotFont.ts";
-import { BoardDefault, ColumnType, PAGE_PADDING_PX, TableBoardConfig } from "../config/board.config.ts";
+import { DotColor } from "../models/colors.model.ts";
 import { TransitionPhase } from "../models/board.model.ts";
-import type { CanvasSize, ColumnSpec, DotPosition, TableBoardData } from "../models/board.model.ts";
+import type { TableColumnSpec, DotPosition, TableBoardData, TableLayoutInput, TableLayout } from "../models/board.model.ts";
+
+import { BoardDefault, ColumnType, PAGE_PADDING_PX, TableBoardConfig } from "../config/board.config.ts";
+import { FONT_HEIGHT, FONT_WIDTH } from "../helpers/dotFont.ts";
 
 import DotMatrix, { getMessageLength } from "./dotMatrix.ts";
 
@@ -34,54 +33,43 @@ type TypewriterState = {
   isActive: boolean;
 };
 
-type LayoutInput = {
-  availableWidth: number;
-  dotUnit: number;
-  dotGap: number;
-  minColsFull: number;
-  minColsHidden: number | null;
-};
+function chooseTableLayout({ availableSpace, dotGap, dotUnit, minWidthWide, minWidthNarrow }: TableLayoutInput): TableLayout {
+  if (availableSpace <= 0) {
+    return { columnHidden: false, dotColumnCount: minWidthWide, scale: 1 };
+  }
 
-type TableLayout = {
-  columnHidden: boolean;
-  dotColumnCount: number;
-  scale: number;
-};
+  const totalWidth = Math.floor((availableSpace + dotGap) / dotUnit);
 
-function chooseTableLayout(i: LayoutInput): TableLayout {
-  if (!(i.availableWidth > 0)) return { columnHidden: false, dotColumnCount: i.minColsFull, scale: 1 }; // e.g. a detached parent
+  const spaceForFull = () => totalWidth >= minWidthWide;
+  const spaceForReduced = () => minWidthNarrow !== null && totalWidth >= minWidthNarrow;
 
-  // n dot columns span n * dotUnit - dotGap px, so this is how many fit at full size
-  const fit = Math.floor((i.availableWidth + i.dotGap) / i.dotUnit);
+  let layout;
+  if (spaceForFull()) {
+    layout = { columnHidden: false, dotColumnCount: totalWidth, scale: 1 };
+  } else if (spaceForReduced()) {
+    layout = { columnHidden: true, dotColumnCount: totalWidth, scale: 1 };
+  } else {
+    layout = {
+      columnHidden: true,
+      dotColumnCount: minWidthNarrow,
+      scale: availableSpace / (minWidthNarrow * dotUnit - dotGap),
+    };
+  }
 
-  const scaled = (columnHidden: boolean, cols: number): TableLayout => ({
-    columnHidden,
-    dotColumnCount: cols,
-    scale: i.availableWidth / (cols * i.dotUnit - i.dotGap),
-  });
-
-  // 1. Shrink the dot grid while the full table still fits
-  if (fit >= i.minColsFull) return { columnHidden: false, dotColumnCount: fit, scale: 1 };
-
-  // 2. Hide the optional column and keep shrinking the grid
-  if (i.minColsHidden !== null && fit >= i.minColsHidden) return { columnHidden: true, dotColumnCount: fit, scale: 1 };
-
-  // 3. Nothing left to drop: scale the minimum layout to fit
-  return i.minColsHidden === null ? scaled(false, i.minColsFull) : scaled(true, i.minColsHidden);
+  return layout;
 }
 
 class TableBoard extends DotMatrix {
   public data$: Subject<TableBoardData> = new Subject<TableBoardData>();
+  public sketch = this.createSketch();
 
   // Data
   private tableHeader: string[];
-  private stationId: string | undefined; // TODO - change to dataId
+  private dataId: string | undefined;
   private messageTable: string[][];
 
   // Board State
   private columnHidden = false;
-  private isInTransition = true;
-  private transitionPhase = TransitionPhase.None;
   private typewriterState: TypewriterState = {
     rowIndex: 0,
     colIndex: 0,
@@ -93,13 +81,9 @@ class TableBoard extends DotMatrix {
   private columnToHide: number | null;
   private columnStartDots: number[] = [];
 
-  // Sizing
-  private scale: number = 1;
-  private canvasSize: CanvasSize = { width: 0, height: 0 };
-
   private parentElt: HTMLElement;
 
-  constructor(parentElt: HTMLElement, tableHeader: string[], messageTable: string[][], stationId: string, hiddenCol: number | null = null) {
+  constructor(parentElt: HTMLElement, tableHeader: string[], messageTable: string[][], hiddenCol: number | null = null) {
     super(TableBoardConfig.Height, BoardDefault.Width);
 
     this.parentElt = parentElt;
@@ -112,15 +96,15 @@ class TableBoard extends DotMatrix {
     this.setCanvasSize();
   }
 
-  setCanvasSize() {
-    const availableWidth = this.parentElt.clientWidth || window.innerWidth - PAGE_PADDING_PX * 2;
+  protected override setCanvasSize() {
+    const availableSpace = this.parentElt.clientWidth || window.innerWidth - PAGE_PADDING_PX * 2;
 
     const layout = chooseTableLayout({
-      availableWidth,
+      availableSpace,
       dotUnit: this.dotUnit,
       dotGap: this.dotGap,
-      minColsFull: calcMinBoardWidth(this.tableHeader, false, this.columnToHide),
-      minColsHidden: this.columnToHide === null ? null : calcMinBoardWidth(this.tableHeader, true, this.columnToHide),
+      minWidthWide: calcMinBoardWidth(this.tableHeader, false, this.columnToHide),
+      minWidthNarrow: calcMinBoardWidth(this.tableHeader, true, this.columnToHide),
     });
 
     this.columnHidden = layout.columnHidden;
@@ -141,66 +125,47 @@ class TableBoard extends DotMatrix {
     };
   }
 
-  sketch = (p: p5) => {
-    // Call p5.js functions
-    p.setup = () => {
-      p.createCanvas(this.canvasSize.width, this.canvasSize.height);
-      p.noLoop();
+  protected override setupSubscriptions(p: p5): void {
+    super.setupSubscriptions(p);
 
-      p.windowResized = () => {
-        this.setCanvasSize();
-        p.resizeCanvas(this.canvasSize.width, this.canvasSize.height);
-        p.redraw();
-      };
+    this.data$
+      .pipe(
+        tap(({ messageTable, dataId }) => {
+          this.messageTable = messageTable;
 
-      this.data$
-        .pipe(
-          tap(({ messageTable, stationId }) => {
-            this.messageTable = messageTable;
-
-            if (stationId === this.stationId && !this.isInTransition) {
-              p.redraw();
-            }
-          }),
-          distinctUntilChanged((prev, curr) => prev.stationId === curr.stationId),
-          switchMap(({ messageTable, stationId }) =>
-            this.doTransition$(p, messageTable, stationId).pipe(
-              catchError((err) => {
-                console.error("Board transition failed:", err);
-                return EMPTY;
-              }),
-            ),
+          if (dataId === this.dataId && !this.isInTransition) {
+            p.redraw();
+          }
+        }),
+        distinctUntilChanged((prev, curr) => prev.dataId === curr.dataId),
+        switchMap(({ messageTable, dataId }) =>
+          this.doTransition$(p, messageTable, dataId).pipe(
+            catchError((err) => {
+              console.error("Board transition failed:", err);
+              return EMPTY;
+            }),
           ),
-          takeUntil(this.destroy$),
-        )
-        .subscribe();
+        ),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
+  }
 
-      this.destroy$.subscribe(() => {
-        console.log("destroying...");
-      });
-    };
+  protected override drawContent(p: p5): void {
+    this.renderRow(p, this.tableHeader, 0, DotColor.Heading);
 
-    p.draw = () => {
-      p.scale(this.scale);
-      p.background(BACKGROUND_COLOR);
-      p.noFill();
-
-      // Draw the current state
-      this.drawBoard(p);
-
-      if (!this.isInTransition || this.transitionPhase === TransitionPhase.In) {
-        this.drawMessages(p);
-      }
-    };
-  };
+    for (let [index, row] of this.messageTable.entries()) {
+      this.renderRow(p, row, index + 1, DotColor.On);
+    }
+  }
 
   /**
-   * Starts transition animation for newly selected station
+   * Starts transition animation for newly selected data
    * @param p - p5.js instance
-   * @param newStationId - station code of the newly selected station
+   * @param newDataId - id of the newly selected data
    * @returns an Observable of the transition animation
    */
-  doTransition$ = (p: p5, messageTable: string[][], newStationId: string | undefined) => {
+  private doTransition$ = (p: p5, messageTable: string[][], newDataId: string | undefined) => {
     this.isInTransition = true;
 
     return of(null).pipe(
@@ -208,17 +173,17 @@ class TableBoard extends DotMatrix {
       delay(TableBoardConfig.TransitionDelayMs),
       map(() => {
         this.transitionPhase = TransitionPhase.Change;
-        console.log(`changing from station ${this.stationId} to ${newStationId}`);
+        console.log(`changing from ${this.dataId} to ${newDataId}`);
 
-        const enterHeading = !this.stationId;
-        this.stationId = newStationId;
+        const enterHeading = !this.dataId;
+        this.dataId = newDataId;
         this.messageTable = messageTable;
 
         return enterHeading;
       }),
       switchMap((enterHeading) => {
         this.transitionPhase = TransitionPhase.In;
-        return newStationId ? this.typeContent$(p, enterHeading) : of(null);
+        return newDataId ? this.typeContent$(p, enterHeading) : of(null);
       }),
       finalize(() => {
         this.isInTransition = false;
@@ -226,7 +191,7 @@ class TableBoard extends DotMatrix {
     );
   };
 
-  typeContent$ = (p: p5, enterHeading: boolean) => {
+  private typeContent$ = (p: p5, enterHeading: boolean) => {
     console.log("typing message in...");
 
     this.typewriterState.isActive = true;
@@ -245,7 +210,7 @@ class TableBoard extends DotMatrix {
     );
   };
 
-  typeRow$ = (p: p5, row: string[], rowIndex: number) => {
+  private typeRow$ = (p: p5, row: string[], rowIndex: number) => {
     this.typewriterState.rowIndex = rowIndex;
 
     return of(row).pipe(
@@ -254,7 +219,7 @@ class TableBoard extends DotMatrix {
     );
   };
 
-  typeCell$ = (p: p5, text: string, colIndex: number) => {
+  private typeCell$ = (p: p5, text: string, colIndex: number) => {
     this.typewriterState.colIndex = colIndex;
     this.typewriterState.currentChar = 0;
 
@@ -271,14 +236,6 @@ class TableBoard extends DotMatrix {
       ),
     );
   };
-
-  drawMessages(p: p5): void {
-    this.renderRow(p, this.tableHeader, 0, DotColor.Heading);
-
-    for (let [index, row] of this.messageTable.entries()) {
-      this.renderRow(p, row, index + 1, DotColor.On);
-    }
-  }
 
   private renderRow(p: p5, row: string[], rowIndex: number, color: DotColor) {
     let adjustedColIndex = 0;
@@ -362,7 +319,7 @@ function calcMinBoardWidth(tableHeader: string[], hidden: boolean, hiddenIndex: 
   return contentWidth + 2 * BoardDefault.PaddingX - TableBoardConfig.ColGap;
 }
 
-function getVisibleColumns(tableHeader: string[], hidden: boolean, hiddenIndex: number | null = null): ColumnSpec[] {
+function getVisibleColumns(tableHeader: string[], hidden: boolean, hiddenIndex: number | null = null): TableColumnSpec[] {
   return tableHeader
     .map((text, index) => ({ text, index, type: COLUMN_LAYOUT[index] }))
     .filter(({ index }) => !(hidden && index === hiddenIndex));

@@ -66,9 +66,9 @@ export function render(): void {
   attachEventListeners();
 
   // Construct board from the current selection
-  const { stationId, track } = selection$.value;
+  const { track } = selection$.value;
   const boardTarget: HTMLElement = getElement(".board-target");
-  const board = new TableBoard(boardTarget, HEADER_ARRAY, [], stationId, track);
+  const board = new TableBoard(boardTarget, HEADER_ARRAY, [], track);
   new p5(board.sketch, boardTarget);
   stationBoard = board;
 
@@ -209,7 +209,7 @@ function subscribeToDataUpdates(board: TableBoard) {
       switchMap((stationId) =>
         combineLatest([selection$, pollArrivals(stationId)]).pipe(
           map(([selection, arrivals]) => ({
-            stationId: selection.stationId,
+            dataId: selection.stationId,
             messageTable: getMessageTable(selection.platformCode, selection.track, arrivals),
           })),
         ),

@@ -6,6 +6,7 @@ import { getElement } from "../helpers/utils.ts";
 import type { Train } from "../models/system.model.ts";
 
 import MessageBoard from "../components/messageBoard.ts";
+import { DotColor, LineColor } from "../models/colors.model.ts";
 
 const HEADING_TEXT = "Trains";
 const EMPTY_MSG = "No trains running!";
@@ -35,7 +36,7 @@ export function render(): void {
 
   // Construct board
   const boardTarget: HTMLElement = getElement(".board-target");
-  const board = new MessageBoard(boardTarget, [], "", "");
+  const board = new MessageBoard(boardTarget, []);
   new p5(board.sketch, boardTarget);
   trainBoard = board;
 
@@ -113,7 +114,8 @@ function subscribeToDataUpdates(board: MessageBoard): Subscription {
         renderTrainList(trains, selected?.id ?? null);
       }
 
-      board.data$.next({ messages, lineCode: selected?.lineCode, trainId: selected?.id });
+      const lineColor = selected?.lineCode ? LineColor.get(selected.lineCode) : DotColor.Off;
+      board.data$.next({ messages, bumperColor: lineColor, dataId: selected?.id });
     });
 }
 

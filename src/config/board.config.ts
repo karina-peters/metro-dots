@@ -16,6 +16,7 @@ export enum BoardDefault {
   PaddingX = 2,
   PaddingY = 2,
   CharGap = 1,
+  MessageMargin = 2,
 }
 
 export enum ColumnType {
@@ -34,8 +35,7 @@ export enum TableBoardConfig {
 }
 
 export enum MessageBoardConfig {
-  MessageMargin = 2,
-  Height = FONT_HEIGHT + 2 * (BoardDefault.PaddingY + MessageMargin),
+  Height = FONT_HEIGHT + 2 * (BoardDefault.PaddingY + BoardDefault.MessageMargin),
   BreakpointScale = 800,
   BumperWidth = 4,
   PauseMs = 2500,
