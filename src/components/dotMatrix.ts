@@ -112,23 +112,22 @@ abstract class DotMatrix {
    * @param p - p5.js instance
    */
   protected drawBoard(p: p5) {
-    let dotX = this.dotRadius;
-    let dotY = this.dotRadius;
+    p.ellipseMode(p.RADIUS);
 
-    for (let i = 0; i < this.dotRowCount; i++) {
-      dotX = this.dotRadius;
+    for (let row = 0; row < this.dotRowCount; row++) {
+      const dotY = this.dotRadius + row * this.dotUnit;
 
-      for (let j = 0; j < this.dotColumnCount; j++) {
-        const color = DotColor.Off;
-        p.fill(color);
-        p.ellipseMode(p.RADIUS);
+      for (let col = 0; col < this.dotColumnCount; col++) {
+        const dotX = this.dotRadius + col * this.dotUnit;
+
+        p.fill(this.backgroundDotColor(row, col));
         p.ellipse(dotX, dotY, this.dotRadius, this.dotRadius);
-
-        dotX += this.dotUnit;
       }
-
-      dotY += this.dotUnit;
     }
+  }
+
+  protected backgroundDotColor(_row: number, _col: number): string {
+    return DotColor.Off;
   }
 
   /**

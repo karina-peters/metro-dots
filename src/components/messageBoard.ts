@@ -107,7 +107,7 @@ class MessageBoard extends DotMatrix {
   }
 
   protected override drawContent(p: p5): void {
-    let { xPos, yPos } = this.calcStartPosition();
+    let { xPos, yPos } = this.messageStartPos;
 
     if (this.isScrolling) {
       xPos -= this.scrollOffset * this.dotUnit;
@@ -264,36 +264,25 @@ class MessageBoard extends DotMatrix {
     });
   };
 
-  // TODO: handle in base class, pass in spec
-  drawBoard(p: p5): void {
-    let dotX = this.dotRadius;
-    let dotY = this.dotRadius;
-    let bumperVisible = MessageBoardConfig.BumperWidth;
+  protected override backgroundDotColor(_row: number, col: number): string {
+    const visible = this.bumperVisible;
+    const inBumper = col < visible || col >= this.dotColumnCount - visible;
 
-    // Handle transition bumper animation
-    if (this.isBumping) {
-      if (this.transitionPhase === TransitionPhase.In) {
-        bumperVisible = this.bumperOffset;
-      } else if (this.transitionPhase === TransitionPhase.Out) {
-        bumperVisible = MessageBoardConfig.BumperWidth - this.bumperOffset;
-      } else {
-        bumperVisible = 0;
-      }
+    return inBumper ? this.bumperColor : DotColor.Off;
+  }
+
+  private get bumperVisible(): number {
+    if (!this.isBumping) {
+      return MessageBoardConfig.BumperWidth;
     }
 
-    for (let i = 0; i < MessageBoardConfig.Height; i++) {
-      dotX = this.dotRadius;
-
-      for (let j = 0; j < this.dotColumnCount; j++) {
-        const color = j < bumperVisible || j >= this.dotColumnCount - bumperVisible ? this.bumperColor : DotColor.Off;
-        p.fill(color);
-        p.ellipseMode(p.RADIUS);
-        p.ellipse(dotX, dotY, this.dotRadius, this.dotRadius);
-
-        dotX += this.dotUnit;
-      }
-
-      dotY += this.dotUnit;
+    switch (this.transitionPhase) {
+      case TransitionPhase.In:
+        return this.bumperOffset;
+      case TransitionPhase.Out:
+        return MessageBoardConfig.BumperWidth - this.bumperOffset;
+      default:
+        return 0;
     }
   }
 
@@ -303,7 +292,7 @@ class MessageBoard extends DotMatrix {
    *
    * @returns x and y coordinates in pixels
    */
-  private calcStartPosition(): DotPosition {
+  private get messageStartPos(): DotPosition {
     let startX = this.dotRadius + MessageBoardConfig.BumperWidth * this.dotUnit;
     let startY = this.dotUnit * (BoardDefault.PaddingY + BoardDefault.MessageMargin) + this.dotRadius;
     let msgLength = getMessageLength(this.currentMessage);
