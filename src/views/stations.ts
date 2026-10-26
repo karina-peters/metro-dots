@@ -1,7 +1,7 @@
 import { BehaviorSubject, timer, Subscription, switchMap, from, map, combineLatest, distinctUntilChanged, catchError, of } from "rxjs";
 import p5 from "p5";
 
-import { REFRESH_RATE, metroSystem } from "../helpers/system.ts";
+import { REFRESH_RATE, metroSystem } from "../services/system.ts";
 import { getElement } from "../helpers/utils.ts";
 import type { Arrival } from "../models/system.model.ts";
 
@@ -247,7 +247,7 @@ function renderStationList() {
   try {
     const listTarget = getElement(".list-target");
 
-    for (const station of metroSystem.getStations()) {
+    for (const station of metroSystem.stations) {
       const button = document.createElement("button");
       button.classList.add("btn-dark", "btn-station");
       button.textContent = station.name;

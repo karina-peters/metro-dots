@@ -16,7 +16,7 @@ import {
 } from "rxjs";
 
 import { DotColor } from "../models/colors.model.ts";
-import { TransitionPhase } from "../models/board.model.ts";
+import { TransitionPhase } from "../models/animation.model.ts";
 import type { TableColumnSpec, DotPosition, TableBoardData, TableLayoutInput, TableLayout } from "../models/board.model.ts";
 
 import { BoardDefault, ColumnType, PAGE_PADDING_PX, TableBoardConfig } from "../config/board.config.ts";

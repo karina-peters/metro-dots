@@ -1,8 +1,9 @@
 import p5 from "p5";
 import { interval, tap, finalize, Subject, takeUntil, take, last } from "rxjs";
 
-import { CanvasSize, TransitionPhase } from "../models/board.model.ts";
+import { CanvasSize } from "../models/board.model.ts";
 import { BACKGROUND_COLOR, DotColor } from "../models/colors.model.ts";
+import { TransitionPhase } from "../models/animation.model.ts";
 
 import { BoardDefault, Dot } from "../config/board.config.ts";
 import { fontData, FONT_WIDTH } from "../helpers/dotFont.ts";
@@ -18,6 +19,8 @@ interface Animation {
 
 abstract class DotMatrix {
   public destroy$: Subject<void> = new Subject<void>();
+
+  protected redraw$ = new Subject<void>();
 
   protected dotRadius: number = Dot.Radius;
   protected dotGap: number = Dot.Gap;
@@ -80,32 +83,12 @@ abstract class DotMatrix {
   }
 
   protected setupSubscriptions(p: p5) {
+    this.redraw$.pipe(takeUntil(this.destroy$)).subscribe(() => p.redraw());
+
     this.destroy$.subscribe(() => {
       console.log("destroying...");
     });
   }
-
-  /**
-   * Generalized offset animation for scroll or bumper transition
-   * @param p - p5.js instance
-   * @param a - animation options
-   */
-  protected createScrollAnimation = (p: p5, a: Animation) => {
-    a.onStart();
-
-    return interval(a.speed).pipe(
-      takeUntil(this.destroy$),
-      take(Math.ceil(a.totalDistance / a.step)),
-      tap(() => {
-        a.onStep();
-        p.redraw();
-      }),
-      last(),
-      finalize(() => {
-        a.onFinalize();
-      }),
-    );
-  };
 
   /**
    * Draw the dot matrix board background with highlight color

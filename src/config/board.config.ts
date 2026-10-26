@@ -30,7 +30,7 @@ export enum TableBoardConfig {
   ColGap = 4,
   Height = Rows * (FONT_HEIGHT + RowGap) - RowGap + 2 * BoardDefault.PaddingY,
   MaxMessageLength = 10,
-  TypeSpeedMs = 50,
+  TypeSpeedMs = 20,
   TransitionDelayMs = 200,
 }
 

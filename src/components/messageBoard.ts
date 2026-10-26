@@ -17,11 +17,12 @@ import {
 } from "rxjs";
 
 import { DotColor } from "../models/colors.model.ts";
-import { SlideDirection, TransitionPhase } from "../models/board.model.ts";
+import { AnimationType, SlideDirection, TransitionPhase } from "../models/animation.model.ts";
 import type { MessageBoardData, DotPosition } from "../models/board.model.ts";
 
 import { Dot, BoardDefault, MessageBoardConfig, PAGE_PADDING_PX } from "../config/board.config.ts";
-import { FONT_HEIGHT, FONT_WIDTH } from "../helpers/dotFont.ts";
+import { OffsetAnimation, slideDisplacement, slideDistance } from "../helpers/offsetAnimation.ts";
+import { FONT_WIDTH } from "../helpers/dotFont.ts";
 
 import DotMatrix, { getMessageLength } from "./dotMatrix.ts";
 
@@ -40,12 +41,13 @@ class MessageBoard extends DotMatrix {
 
   // Board State
   private messageTimer$: Subscription | null = null;
-  private scrollOffset = 0;
-  private isScrolling = false;
-  private slideOffset = 0;
-  private isSliding = false;
-  private bumperOffset = 0;
-  private isBumping = true;
+
+  // Animations
+  private readonly animationOpts = { intervalMs: MessageBoardConfig.ScrollSpeedMs, step: MessageBoardConfig.ScrollStep };
+  private entrance = { kind: AnimationType.Slide, direction: SlideDirection.Down };
+  private scroll = new OffsetAnimation(this.animationOpts, () => this.redraw$.next(), this.destroy$);
+  private bumper = new OffsetAnimation(this.animationOpts, () => this.redraw$.next(), this.destroy$);
+  private slide = new OffsetAnimation(this.animationOpts, () => this.redraw$.next(), this.destroy$);
 
   private parentElt: HTMLElement;
 
@@ -109,21 +111,21 @@ class MessageBoard extends DotMatrix {
   protected override drawContent(p: p5): void {
     let { xPos, yPos } = this.messageStartPos;
 
-    if (this.isScrolling) {
-      xPos -= this.scrollOffset * this.dotUnit;
+    if (this.scroll.active) {
+      xPos -= this.scroll.progress * this.dotUnit;
     }
 
-    if (this.isSliding) {
-      // TODO: handle different directions
-      yPos = yPos + (this.slideOffset - FONT_HEIGHT - BoardDefault.MessageMargin - BoardDefault.PaddingY) * this.dotUnit;
+    if (this.slide.active) {
+      const d = slideDisplacement(this.entrance.direction, this.slide.remaining);
+      xPos += d.x * this.dotUnit;
+      yPos += d.y * this.dotUnit;
     }
 
-    let messageWidth = 0;
-    for (const char of this.currentMessage) {
-      const charStartX = xPos + messageWidth;
-      this.renderChar(p, char, charStartX, yPos, DotColor.On);
+    let startX = xPos;
+    for (const [i, char] of Array.from(this.currentMessage).entries()) {
+      this.renderChar(p, char, startX, yPos, DotColor.On);
 
-      messageWidth += this.dotUnit * (FONT_WIDTH + BoardDefault.CharGap);
+      startX += this.dotUnit * (FONT_WIDTH + BoardDefault.CharGap);
     }
   }
 
@@ -135,9 +137,6 @@ class MessageBoard extends DotMatrix {
   private startMessageTimer(p: p5): void {
     this.clearSubscriptions();
 
-    this.scrollOffset = 0;
-    this.isScrolling = false;
-
     p.redraw();
 
     const needsScroll = this.messageOverflow(this.currentMessage);
@@ -146,7 +145,7 @@ class MessageBoard extends DotMatrix {
     this.messageTimer$ = timer(timerDelay)
       .pipe(
         takeUntil(this.destroy$),
-        switchMap(() => (needsScroll ? this.scrollMessage$(p) : of(null))),
+        switchMap(() => (needsScroll ? this.scrollMessage$() : of(null))),
         takeWhile(() => !this.isInTransition),
         tap(() => this.nextMessage(p)),
       )
@@ -168,7 +167,7 @@ class MessageBoard extends DotMatrix {
       takeUntil(this.destroy$),
       switchMap(() => {
         this.transitionPhase = TransitionPhase.Out;
-        return this.dataId ? this.animateBumpers$(p) : of(null);
+        return this.dataId ? this.animateBumpers$() : of(null);
       }),
       tap(() => {
         this.transitionPhase = TransitionPhase.Change;
@@ -181,87 +180,12 @@ class MessageBoard extends DotMatrix {
       delay(MessageBoardConfig.TransitionDelayMs),
       switchMap(() => {
         this.transitionPhase = TransitionPhase.In;
-        return forkJoin([this.animateBumpers$(p), this.slideMessageIn$(p, SlideDirection.Down)]);
+        return forkJoin([this.animateBumpers$(), this.slideMessageIn$(SlideDirection.Down)]);
       }),
       finalize(() => {
         this.isInTransition = false;
-        this.bumperOffset = 0;
-        this.slideOffset = 0;
       }),
     );
-  };
-
-  /**
-   * Start scrolling animation for a message that doesn't fit on the display
-   * @param p - p5.js instance
-   */
-  private scrollMessage$ = (p: p5) => {
-    console.log("scrolling...");
-
-    return this.createScrollAnimation(p, {
-      speed: MessageBoardConfig.ScrollSpeedMs,
-      step: MessageBoardConfig.ScrollStep,
-      totalDistance: getMessageLength(this.currentMessage) + MessageBoardConfig.BumperWidth + 2 * BoardDefault.MessageMargin,
-      onStart: () => {
-        this.isScrolling = true;
-      },
-      onStep: () => {
-        this.scrollOffset += MessageBoardConfig.ScrollStep;
-      },
-      onFinalize: () => {
-        this.scrollOffset = 0;
-        this.isScrolling = false;
-      },
-    });
-  };
-
-  private slideMessageIn$ = (p: p5, /* TODO */ direction: SlideDirection) => {
-    console.log("sliding message in...");
-
-    return this.createScrollAnimation(p, {
-      speed: MessageBoardConfig.ScrollSpeedMs,
-      step: MessageBoardConfig.ScrollStep,
-      totalDistance: FONT_HEIGHT + BoardDefault.PaddingY + BoardDefault.MessageMargin,
-      onStart: () => {
-        this.isSliding = true;
-      },
-      onStep: () => {
-        this.slideOffset += MessageBoardConfig.ScrollStep;
-      },
-      onFinalize: () => {
-        this.isSliding = false;
-        this.slideOffset = 0;
-      },
-    });
-  };
-
-  private splitMessageIn$ = () => {
-    // TODO - add an animation to make the top half of the message slide in from to top and the bottom from the bottom
-  };
-
-  /**
-   * Start bumper transition animation
-   * @param p - p5.js instance
-   * @returns
-   */
-  private animateBumpers$ = (p: p5) => {
-    console.log(`animating bumpers ${this.transitionPhase}...`);
-
-    return this.createScrollAnimation(p, {
-      speed: MessageBoardConfig.ScrollSpeedMs,
-      step: MessageBoardConfig.ScrollStep,
-      totalDistance: MessageBoardConfig.BumperWidth,
-      onStart: () => {
-        this.isBumping = true;
-      },
-      onStep: () => {
-        this.bumperOffset += MessageBoardConfig.ScrollStep;
-      },
-      onFinalize: () => {
-        this.isBumping = false;
-        this.bumperOffset = 0;
-      },
-    });
   };
 
   protected override backgroundDotColor(_row: number, col: number): string {
@@ -272,19 +196,41 @@ class MessageBoard extends DotMatrix {
   }
 
   private get bumperVisible(): number {
-    if (!this.isBumping) {
-      return MessageBoardConfig.BumperWidth;
-    }
-
     switch (this.transitionPhase) {
-      case TransitionPhase.In:
-        return this.bumperOffset;
       case TransitionPhase.Out:
-        return MessageBoardConfig.BumperWidth - this.bumperOffset;
-      default:
+        return this.bumper.active ? MessageBoardConfig.BumperWidth - this.bumper.progress : 0;
+      case TransitionPhase.Change:
         return 0;
+      case TransitionPhase.In:
+        return this.bumper.active ? this.bumper.progress : MessageBoardConfig.BumperWidth;
+      default:
+        return MessageBoardConfig.BumperWidth;
     }
   }
+
+  /**
+   * Start scrolling animation for a message that doesn't fit on the display
+   */
+  private scrollMessage$ = () => {
+    console.log("scrolling...");
+
+    const distance = getMessageLength(this.currentMessage) + MessageBoardConfig.BumperWidth + 2 * BoardDefault.MessageMargin;
+    return this.scroll.run$(distance);
+  };
+
+  private slideMessageIn$ = (direction: SlideDirection) => {
+    console.log("sliding message in...");
+
+    this.entrance.direction = direction;
+    const distance = slideDistance(direction, { columns: this.dotColumnCount });
+    return this.slide.run$(distance);
+  };
+
+  private animateBumpers$ = () => {
+    console.log(`animating bumpers ${this.transitionPhase}...`);
+
+    return this.bumper.run$(MessageBoardConfig.BumperWidth);
+  };
 
   /**
    * Calculate the starting position for drawing the message

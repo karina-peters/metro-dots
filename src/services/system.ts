@@ -1,4 +1,4 @@
-import { fetchJsonData } from "./utils.ts";
+import { fetchJsonData } from "../helpers/utils.ts";
 import { Circuit, Arrival, Station, Train } from "../models/system.model.ts";
 import { ArrivalDTO, RouteDTO, TrainDTO, CircuitDTO, StationDTO } from "../models/wmata.model.ts";
 
@@ -8,22 +8,26 @@ const FORWARD = 1;
 const BACKWARD = -1;
 
 class SystemService {
-  stationsByCode: Map<string, Station> = new Map<string, Station>();
-  stationsById: Map<string, Station> = new Map<string, Station>();
-  circuitsByLine: Map<string, Circuit[]> = new Map<string, Circuit[]>();
+  private _stationsByCode: Map<string, Station> = new Map<string, Station>();
+  private _stationsById: Map<string, Station> = new Map<string, Station>();
+  private _circuitsByLine: Map<string, Circuit[]> = new Map<string, Circuit[]>();
 
   constructor() {}
 
-  async init(): Promise<[void, void]> {
-    return Promise.all([this.loadStations(), this.loadCircuits()]);
+  public async init(): Promise<[void, void]> {
+    return Promise.all([this._loadStations(), this._loadCircuits()]);
   }
 
-  getLineId(lineCode: string, lineNum: number): string {
+  public get stations(): Array<Station> {
+    return [...this._stationsById.values()];
+  }
+
+  public getLineId(lineCode: string, lineNum: number): string {
     return `${lineCode}-${lineNum}`;
   }
 
-  getStationName(code: string): string {
-    const station = this.stationsByCode.get(code);
+  public getStationName(code: string): string {
+    const station = this._stationsByCode.get(code);
     if (!station) {
       throw new Error(`Station[${code}] not found`);
     }
@@ -31,8 +35,8 @@ class SystemService {
     return station.name;
   }
 
-  getStation(id: string): Station {
-    const station = this.stationsById.get(id);
+  public getStation(id: string): Station {
+    const station = this._stationsById.get(id);
     if (!station) {
       throw new Error(`Station[${id}] not found`);
     }
@@ -40,13 +44,9 @@ class SystemService {
     return station;
   }
 
-  getStations(): Array<Station> {
-    return [...this.stationsById.values()];
-  }
-
-  getNextStationCircuit(cktId: number, lineCode: string, lineNum: number): Circuit | null {
+  public getNextStationCircuit(cktId: number, lineCode: string, lineNum: number): Circuit | null {
     const lineId = this.getLineId(lineCode, lineNum);
-    const circuits = this.circuitsByLine.get(lineId) || [];
+    const circuits = this._circuitsByLine.get(lineId) || [];
 
     const start = circuits.findIndex((c) => c.id === cktId);
     if (start === -1) {
@@ -66,9 +66,9 @@ class SystemService {
     return null;
   }
 
-  async fetchArrivals(stationId: string): Promise<Map<string, Map<string, Arrival[]>> | null> {
+  public async fetchArrivals(stationId: string): Promise<Map<string, Map<string, Arrival[]>> | null> {
     try {
-      const station = this.stationsById.get(stationId);
+      const station = this._stationsById.get(stationId);
       if (!station) {
         throw new Error(`Station[${stationId}] not found`);
       }
@@ -88,7 +88,7 @@ class SystemService {
           }) as Arrival,
       );
 
-      return this.groupArrivals(station.codes, arrivals);
+      return this._groupArrivals(station.codes, arrivals);
     } catch (error: any) {
       console.error(`Failed to get updated arrivals: ${error.message}`);
       return null;
@@ -96,7 +96,7 @@ class SystemService {
   }
 
   // TODO: group by line?
-  async fetchTrains(): Promise<Array<Train> | null> {
+  public async fetchTrains(): Promise<Array<Train> | null> {
     try {
       const positionData: Array<TrainDTO> = await fetchJsonData("/api/trains");
 
@@ -121,7 +121,7 @@ class SystemService {
     }
   }
 
-  private groupArrivals(stationCodes: string[], arrivals: Arrival[]): Map<string, Map<string, Arrival[]>> {
+  private _groupArrivals(stationCodes: string[], arrivals: Arrival[]): Map<string, Map<string, Arrival[]>> {
     const arrivalsByStation = new Map(
       stationCodes.map((code): [string, Map<string, Arrival[]>] => [
         code,
@@ -142,11 +142,11 @@ class SystemService {
     return arrivalsByStation;
   }
 
-  private groupTrains() {
+  private _groupTrains() {
     // TODO: group by line, destination
   }
 
-  private async loadStations(): Promise<void> {
+  private async _loadStations(): Promise<void> {
     const stationData: Array<StationDTO> = await fetchJsonData("/data/stations.json");
 
     if (!stationData || stationData.length === 0) {
@@ -154,18 +154,18 @@ class SystemService {
     }
 
     for (const data of stationData) {
-      const station = this.stationsById.getOrInsert(data.id, {
+      const station = this._stationsById.getOrInsert(data.id, {
         id: data.id,
         name: data.name,
         codes: [],
       });
 
       station.codes.push(data.code);
-      this.stationsByCode.set(data.code, station);
+      this._stationsByCode.set(data.code, station);
     }
   }
 
-  private async loadCircuits(): Promise<void> {
+  private async _loadCircuits(): Promise<void> {
     const routeData: Array<RouteDTO> = await fetchJsonData("/data/routes.json");
 
     if (!routeData || routeData.length === 0) {
@@ -176,7 +176,7 @@ class SystemService {
       const lineId = this.getLineId(data.LineCode, data.TrackNum);
       const circuits = data.TrackCircuits?.map((c: CircuitDTO) => ({ id: c.CircuitId, stnCode: c.StationCode, seqNum: c.SeqNum }));
 
-      this.circuitsByLine.set(lineId, circuits);
+      this._circuitsByLine.set(lineId, circuits);
     }
   }
 }

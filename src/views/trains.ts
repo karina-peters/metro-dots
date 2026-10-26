@@ -1,7 +1,7 @@
 import { BehaviorSubject, Subscription, timer, combineLatest, switchMap, from, catchError, of, distinctUntilChanged } from "rxjs";
 import p5 from "p5";
 
-import { metroSystem, REFRESH_RATE } from "../helpers/system.ts";
+import { metroSystem, REFRESH_RATE } from "../services/system.ts";
 import { getElement } from "../helpers/utils.ts";
 import type { Train } from "../models/system.model.ts";
 
