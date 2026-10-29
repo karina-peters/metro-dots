@@ -1,10 +1,11 @@
 import p5 from "p5";
 import { interval, tap, finalize, Subject, takeUntil, take, last } from "rxjs";
 
-import { CanvasSize, TransitionPhase } from "../models/board.model.ts";
+import { CanvasSize } from "../models/board.model.ts";
 import { BACKGROUND_COLOR, DotColor } from "../models/colors.model.ts";
+import { TransitionPhase } from "../models/animation.model.ts";
 
-import { BoardDefault, Dot } from "../config/board.config.ts";
+import { DefaultBoardConfig, Dot } from "../config/board.config.ts";
 import { fontData, FONT_WIDTH } from "../helpers/dotFont.ts";
 
 interface Animation {
@@ -19,12 +20,14 @@ interface Animation {
 abstract class DotMatrix {
   public destroy$: Subject<void> = new Subject<void>();
 
+  protected redraw$ = new Subject<void>();
+
   protected dotRadius: number = Dot.Radius;
   protected dotGap: number = Dot.Gap;
   protected dotUnit: number = Dot.Unit;
   protected dotColumnCount: number;
   protected dotRowCount: number;
-  protected textField: { top: number; right: number; bottom: number; left: number };
+  protected textField = { top: 0, right: 0, bottom: 0, left: 0 };
   protected scale: number = 1;
   protected canvasSize: CanvasSize = { width: 0, height: 0 };
   protected isInTransition = true;
@@ -38,13 +41,6 @@ abstract class DotMatrix {
   constructor(numRows: number, numCols: number) {
     this.dotColumnCount = numCols;
     this.dotRowCount = numRows;
-
-    this.textField = {
-      top: BoardDefault.PaddingY * this.dotUnit,
-      right: (this.dotColumnCount - BoardDefault.PaddingX - BoardDefault.MessageMargin) * this.dotUnit - this.dotGap,
-      bottom: (this.dotRowCount - BoardDefault.PaddingY - BoardDefault.MessageMargin) * this.dotUnit - this.dotGap,
-      left: (BoardDefault.PaddingX + BoardDefault.MessageMargin) * this.dotUnit,
-    };
   }
 
   protected abstract setCanvasSize(): void;
@@ -80,55 +76,34 @@ abstract class DotMatrix {
   }
 
   protected setupSubscriptions(p: p5) {
+    this.redraw$.pipe(takeUntil(this.destroy$)).subscribe(() => p.redraw());
+
     this.destroy$.subscribe(() => {
       console.log("destroying...");
     });
   }
 
   /**
-   * Generalized offset animation for scroll or bumper transition
-   * @param p - p5.js instance
-   * @param a - animation options
-   */
-  protected createScrollAnimation = (p: p5, a: Animation) => {
-    a.onStart();
-
-    return interval(a.speed).pipe(
-      takeUntil(this.destroy$),
-      take(Math.ceil(a.totalDistance / a.step)),
-      tap(() => {
-        a.onStep();
-        p.redraw();
-      }),
-      last(),
-      finalize(() => {
-        a.onFinalize();
-      }),
-    );
-  };
-
-  /**
    * Draw the dot matrix board background with highlight color
    * @param p - p5.js instance
    */
   protected drawBoard(p: p5) {
-    let dotX = this.dotRadius;
-    let dotY = this.dotRadius;
+    p.ellipseMode(p.RADIUS);
 
-    for (let i = 0; i < this.dotRowCount; i++) {
-      dotX = this.dotRadius;
+    for (let row = 0; row < this.dotRowCount; row++) {
+      const dotY = this.dotRadius + row * this.dotUnit;
 
-      for (let j = 0; j < this.dotColumnCount; j++) {
-        const color = DotColor.Off;
-        p.fill(color);
-        p.ellipseMode(p.RADIUS);
+      for (let col = 0; col < this.dotColumnCount; col++) {
+        const dotX = this.dotRadius + col * this.dotUnit;
+
+        p.fill(this.backgroundDotColor(row, col));
         p.ellipse(dotX, dotY, this.dotRadius, this.dotRadius);
-
-        dotX += this.dotUnit;
       }
-
-      dotY += this.dotUnit;
     }
+  }
+
+  protected backgroundDotColor(_row: number, _col: number): string {
+    return DotColor.Off;
   }
 
   /**
@@ -141,6 +116,8 @@ abstract class DotMatrix {
    * @param color - Color to render the char in
    */
   protected renderChar(p: p5, char: string, startX: number, startY: number, color: string) {
+    p.ellipseMode(p.RADIUS);
+
     const charMatrix = fontData.get(char.toUpperCase()) || fontData.get(" ") || []; // Default to space if character not found
     const { top, right, bottom, left } = this.textField;
 
@@ -152,7 +129,6 @@ abstract class DotMatrix {
       for (const dotVal of row) {
         if (dotVal === 1 && dotY >= top && dotX <= right && dotY <= bottom && dotX >= left) {
           p.fill(color);
-          p.ellipseMode(p.RADIUS);
           p.ellipse(dotX, dotY, this.dotRadius, this.dotRadius);
         }
 
@@ -182,7 +158,7 @@ abstract class DotMatrix {
  * @returns Length of the message in dot matrix columns
  */
 export function getMessageLength(message: string): number {
-  return message.length * (FONT_WIDTH + BoardDefault.CharGap) - BoardDefault.CharGap;
+  return message.length * (FONT_WIDTH + DefaultBoardConfig.CharGap) - DefaultBoardConfig.CharGap;
 }
 
 export default DotMatrix;

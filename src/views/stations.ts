@@ -1,7 +1,7 @@
 import { BehaviorSubject, timer, Subscription, switchMap, from, map, combineLatest, distinctUntilChanged, catchError, of } from "rxjs";
 import p5 from "p5";
 
-import { REFRESH_RATE, metroSystem } from "../helpers/system.ts";
+import { REFRESH_RATE, metroSystem } from "../services/system.ts";
 import { getElement } from "../helpers/utils.ts";
 import type { Arrival } from "../models/system.model.ts";
 
@@ -14,6 +14,8 @@ const HEADER_ARRAY = ["LINE", "CAR", "DEST", "MIN"];
 const DEFAULT_ID = "college-park-u-of-md";
 const DEFAULT_PLATFORM = "E09";
 const DEFAULT_TRACK: Track = 1;
+const HIDDEN_COL = 1;
+const TIME_COL = 3;
 
 enum ActionType {
   ChangeStation,
@@ -65,10 +67,9 @@ export function render(): void {
   renderStationList();
   attachEventListeners();
 
-  // Construct board from the current selection
-  const { track } = selection$.value;
+  // Construct board
   const boardTarget: HTMLElement = getElement(".board-target");
-  const board = new TableBoard(boardTarget, HEADER_ARRAY, [], track);
+  const board = new TableBoard(boardTarget, HEADER_ARRAY, [], TIME_COL, HIDDEN_COL);
   new p5(board.sketch, boardTarget);
   stationBoard = board;
 
@@ -210,6 +211,7 @@ function subscribeToDataUpdates(board: TableBoard) {
         combineLatest([selection$, pollArrivals(stationId)]).pipe(
           map(([selection, arrivals]) => ({
             dataId: selection.stationId,
+            viewKey: `${selection.platformCode}|${selection.track}`,
             messageTable: getMessageTable(selection.platformCode, selection.track, arrivals),
           })),
         ),
@@ -247,7 +249,7 @@ function renderStationList() {
   try {
     const listTarget = getElement(".list-target");
 
-    for (const station of metroSystem.getStations()) {
+    for (const station of metroSystem.stations) {
       const button = document.createElement("button");
       button.classList.add("btn-dark", "btn-station");
       button.textContent = station.name;

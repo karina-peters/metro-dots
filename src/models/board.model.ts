@@ -1,19 +1,5 @@
 import { ColumnType } from "../config/board.config";
 
-export enum TransitionPhase {
-  None = "none",
-  Out = "out",
-  In = "in",
-  Change = "change",
-}
-
-export enum SlideDirection {
-  Left = "left",
-  Right = "right",
-  Up = "up",
-  Down = "down",
-}
-
 export type BoardLayout = {
   numCols: number;
   scale: number;
@@ -29,6 +15,7 @@ export type BoardLayout = {
 export type TableBoardData = {
   messageTable: string[][];
   dataId: string | undefined;
+  viewKey: string | undefined;
 };
 
 export type MessageBoardData = {
@@ -65,4 +52,9 @@ export type TableLayout = {
   columnHidden: boolean;
   dotColumnCount: number;
   scale: number;
+};
+
+export type TableCell = {
+  row: number;
+  col: number;
 };

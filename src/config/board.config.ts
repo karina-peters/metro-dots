@@ -11,10 +11,8 @@ export enum Dot {
   Unit = DOT_RADIUS_PX * 2 + DOT_GAP_PX,
 }
 
-export enum BoardDefault {
+export enum DefaultBoardConfig {
   Width = 120,
-  PaddingX = 2,
-  PaddingY = 2,
   CharGap = 1,
   MessageMargin = 2,
 }
@@ -25,19 +23,25 @@ export enum ColumnType {
 }
 
 export enum TableBoardConfig {
+  PaddingX = 2,
+  PaddingY = 2,
   Rows = 4,
   RowGap = 4,
   ColGap = 4,
-  Height = Rows * (FONT_HEIGHT + RowGap) - RowGap + 2 * BoardDefault.PaddingY,
+  Height = Rows * (FONT_HEIGHT + RowGap) - RowGap + 2 * PaddingY,
   MaxMessageLength = 10,
-  TypeSpeedMs = 50,
-  TransitionDelayMs = 200,
+  TypeSpeedMs = 20,
+  TransitionDelayMs = 0,
+  BlinkIntervalMs = 350,
+  BlinkCount = 3,
 }
 
 export enum MessageBoardConfig {
-  Height = FONT_HEIGHT + 2 * (BoardDefault.PaddingY + BoardDefault.MessageMargin),
+  PaddingX = 0,
+  PaddingY = 2,
+  Height = FONT_HEIGHT + 2 * (PaddingY + DefaultBoardConfig.MessageMargin),
   BreakpointScale = 800,
-  BumperWidth = 4,
+  BumperWidth = 6,
   PauseMs = 2500,
   ScrollPauseMs = 1500,
   ScrollSpeedMs = 40,

@@ -5,7 +5,7 @@ import "./styles/home.css";
 import "./styles.css";
 
 import { state$ } from "./helpers/state.ts";
-import { metroSystem } from "./helpers/system.ts";
+import { metroSystem } from "./services/system.ts";
 
 import { render as renderHome } from "./views/home.ts";
 import { pause as pauseStations, render as renderStations } from "./views/stations.ts";
