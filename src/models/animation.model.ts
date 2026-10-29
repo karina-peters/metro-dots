@@ -5,6 +5,10 @@ export enum TransitionPhase {
   Change = "change",
 }
 
+export enum AnimationType {
+  Slide = "slide",
+}
+
 export enum SlideDirection {
   Left = "left",
   Right = "right",
@@ -12,11 +16,17 @@ export enum SlideDirection {
   Down = "down",
 }
 
-export enum AnimationType {
-  Slide = "slide",
+export enum SlidePhase {
+  In = "in",
+  Out = "out",
 }
 
-export interface OffsetAnimationOptions {
-  intervalMs: number;
-  step: number;
+export enum TypeMode {
+  In = "in",
+  Out = "out",
+}
+
+export enum BlinkMode {
+  Row = "row",
+  UpdateCol = "update",
 }

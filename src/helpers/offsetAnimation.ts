@@ -1,7 +1,12 @@
 import { Observable, defer, interval, take, tap, takeUntil, count, finalize } from "rxjs";
 import { FONT_HEIGHT } from "./dotFont.ts";
-import { BoardDefault } from "../config/board.config.ts";
-import { OffsetAnimationOptions, SlideDirection } from "../models/animation.model.ts";
+import { DefaultBoardConfig, MessageBoardConfig } from "../config/board.config.ts";
+import { SlideDirection, SlidePhase } from "../models/animation.model.ts";
+
+export interface OffsetAnimationOptions {
+  intervalMs: number;
+  step: number;
+}
 
 const DIRECTION_VECTOR: Record<SlideDirection, { x: number; y: number }> = {
   [SlideDirection.Up]: { x: 0, y: -1 },
@@ -14,16 +19,18 @@ export function slideDistance(direction: SlideDirection, board: { columns: numbe
   switch (direction) {
     case SlideDirection.Up:
     case SlideDirection.Down:
-      return FONT_HEIGHT + BoardDefault.PaddingY + BoardDefault.MessageMargin;
+      return FONT_HEIGHT + MessageBoardConfig.PaddingY + DefaultBoardConfig.MessageMargin;
     case SlideDirection.Left:
     case SlideDirection.Right:
       return board.columns;
   }
 }
 
-export function slideDisplacement(direction: SlideDirection, remaining: number) {
+export function slideDisplacement(direction: SlideDirection, mode: SlidePhase, progress: number, remaining: number) {
   const vector = DIRECTION_VECTOR[direction];
-  return { x: -vector.x * remaining, y: -vector.y * remaining };
+  const offset = mode === SlidePhase.In ? -remaining : progress;
+
+  return { x: vector.x * offset, y: vector.y * offset };
 }
 
 export class OffsetAnimation {
@@ -34,7 +41,7 @@ export class OffsetAnimation {
   constructor(
     private readonly opts: OffsetAnimationOptions,
     private readonly onFrame: () => void,
-    private readonly until$: Observable<unknown>,
+    private readonly until$: Observable<void>,
   ) {}
 
   get active() {

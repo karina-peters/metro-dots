@@ -9,6 +9,7 @@ export const LineColor: ReadonlyMap<string, string> = new Map([
 
 export enum DotColor {
   On = "#EBB100",
+  Dim = "#7a7157",
   Off = "#111111",
   Heading = "#EF1800",
   Highlight = "#9BD400",

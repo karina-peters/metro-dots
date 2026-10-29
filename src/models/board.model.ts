@@ -15,6 +15,7 @@ export type BoardLayout = {
 export type TableBoardData = {
   messageTable: string[][];
   dataId: string | undefined;
+  viewKey: string | undefined;
 };
 
 export type MessageBoardData = {
@@ -51,4 +52,9 @@ export type TableLayout = {
   columnHidden: boolean;
   dotColumnCount: number;
   scale: number;
+};
+
+export type TableCell = {
+  row: number;
+  col: number;
 };

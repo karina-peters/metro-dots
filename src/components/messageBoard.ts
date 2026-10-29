@@ -17,10 +17,10 @@ import {
 } from "rxjs";
 
 import { DotColor } from "../models/colors.model.ts";
-import { AnimationType, SlideDirection, TransitionPhase } from "../models/animation.model.ts";
+import { AnimationType, SlideDirection, SlidePhase, TransitionPhase } from "../models/animation.model.ts";
 import type { MessageBoardData, DotPosition } from "../models/board.model.ts";
 
-import { Dot, BoardDefault, MessageBoardConfig, PAGE_PADDING_PX } from "../config/board.config.ts";
+import { Dot, DefaultBoardConfig, MessageBoardConfig, PAGE_PADDING_PX } from "../config/board.config.ts";
 import { OffsetAnimation, slideDisplacement, slideDistance } from "../helpers/offsetAnimation.ts";
 import { FONT_WIDTH } from "../helpers/dotFont.ts";
 
@@ -44,7 +44,8 @@ class MessageBoard extends DotMatrix {
 
   // Animations
   private readonly animationOpts = { intervalMs: MessageBoardConfig.ScrollSpeedMs, step: MessageBoardConfig.ScrollStep };
-  private entrance = { kind: AnimationType.Slide, direction: SlideDirection.Down };
+  private enterConfig = { kind: AnimationType.Slide, mode: SlidePhase.In, direction: SlideDirection.Down };
+  private exitConfig = { kind: AnimationType.Slide, mode: SlidePhase.Out, direction: SlideDirection.Up };
   private scroll = new OffsetAnimation(this.animationOpts, () => this.redraw$.next(), this.destroy$);
   private bumper = new OffsetAnimation(this.animationOpts, () => this.redraw$.next(), this.destroy$);
   private slide = new OffsetAnimation(this.animationOpts, () => this.redraw$.next(), this.destroy$);
@@ -52,7 +53,7 @@ class MessageBoard extends DotMatrix {
   private parentElt: HTMLElement;
 
   constructor(parentElt: HTMLElement, messages: string[]) {
-    super(MessageBoardConfig.Height, BoardDefault.Width);
+    super(MessageBoardConfig.Height, DefaultBoardConfig.Width);
 
     this.parentElt = parentElt;
 
@@ -66,11 +67,11 @@ class MessageBoard extends DotMatrix {
   protected override setCanvasSize() {
     if (window.innerWidth < MessageBoardConfig.BreakpointScale) {
       // Scale entire board
-      this.dotColumnCount = BoardDefault.Width;
+      this.dotColumnCount = DefaultBoardConfig.Width;
       this.scale = (window.innerWidth - PAGE_PADDING_PX) / (this.dotColumnCount * Dot.Unit - Dot.Gap);
     } else {
       // Reduce number of dot columns
-      this.dotColumnCount = Math.floor(this.parentElt.clientWidth / Dot.Unit) || BoardDefault.Width;
+      this.dotColumnCount = Math.floor(this.parentElt.clientWidth / Dot.Unit) || DefaultBoardConfig.Width;
       this.scale = 1;
     }
 
@@ -80,10 +81,10 @@ class MessageBoard extends DotMatrix {
     };
 
     this.textField = {
-      top: BoardDefault.PaddingY + BoardDefault.MessageMargin,
-      right: (this.dotColumnCount - MessageBoardConfig.BumperWidth - BoardDefault.MessageMargin) * this.dotUnit - this.dotGap,
-      bottom: (this.dotRowCount - BoardDefault.PaddingY - BoardDefault.MessageMargin) * this.dotUnit - this.dotGap,
-      left: (MessageBoardConfig.BumperWidth + BoardDefault.MessageMargin) * this.dotUnit,
+      top: DefaultBoardConfig.MessageMargin * this.dotUnit,
+      right: (this.dotColumnCount - MessageBoardConfig.BumperWidth - DefaultBoardConfig.MessageMargin) * this.dotUnit - this.dotGap,
+      bottom: (this.dotRowCount - DefaultBoardConfig.MessageMargin) * this.dotUnit - this.dotGap,
+      left: (MessageBoardConfig.BumperWidth + DefaultBoardConfig.MessageMargin) * this.dotUnit,
     };
   }
 
@@ -111,12 +112,18 @@ class MessageBoard extends DotMatrix {
   protected override drawContent(p: p5): void {
     let { xPos, yPos } = this.messageStartPos;
 
+    // Don't render any content if the out animation has completed
+    if (this.transitionPhase === TransitionPhase.Out && !this.slide.active) {
+      return;
+    }
+
     if (this.scroll.active) {
       xPos -= this.scroll.progress * this.dotUnit;
     }
 
     if (this.slide.active) {
-      const d = slideDisplacement(this.entrance.direction, this.slide.remaining);
+      const spec = this.transitionPhase === TransitionPhase.In ? this.enterConfig : this.exitConfig;
+      const d = slideDisplacement(spec.direction, spec.mode, this.slide.progress, this.slide.remaining);
       xPos += d.x * this.dotUnit;
       yPos += d.y * this.dotUnit;
     }
@@ -125,7 +132,7 @@ class MessageBoard extends DotMatrix {
     for (const [i, char] of Array.from(this.currentMessage).entries()) {
       this.renderChar(p, char, startX, yPos, DotColor.On);
 
-      startX += this.dotUnit * (FONT_WIDTH + BoardDefault.CharGap);
+      startX += this.dotUnit * (FONT_WIDTH + DefaultBoardConfig.CharGap);
     }
   }
 
@@ -167,7 +174,7 @@ class MessageBoard extends DotMatrix {
       takeUntil(this.destroy$),
       switchMap(() => {
         this.transitionPhase = TransitionPhase.Out;
-        return this.dataId ? this.animateBumpers$() : of(null);
+        return this.dataId ? forkJoin([this.animateBumpers$(), this.slideMessage$()]) : of(null);
       }),
       tap(() => {
         this.transitionPhase = TransitionPhase.Change;
@@ -180,7 +187,7 @@ class MessageBoard extends DotMatrix {
       delay(MessageBoardConfig.TransitionDelayMs),
       switchMap(() => {
         this.transitionPhase = TransitionPhase.In;
-        return forkJoin([this.animateBumpers$(), this.slideMessageIn$(SlideDirection.Down)]);
+        return forkJoin([this.animateBumpers$(), this.slideMessage$()]);
       }),
       finalize(() => {
         this.isInTransition = false;
@@ -214,15 +221,15 @@ class MessageBoard extends DotMatrix {
   private scrollMessage$ = () => {
     console.log("scrolling...");
 
-    const distance = getMessageLength(this.currentMessage) + MessageBoardConfig.BumperWidth + 2 * BoardDefault.MessageMargin;
+    const distance = getMessageLength(this.currentMessage) + MessageBoardConfig.BumperWidth + 2 * DefaultBoardConfig.MessageMargin;
     return this.scroll.run$(distance);
   };
 
-  private slideMessageIn$ = (direction: SlideDirection) => {
-    console.log("sliding message in...");
+  private slideMessage$ = () => {
+    console.log(`sliding message ${this.transitionPhase}...`);
 
-    this.entrance.direction = direction;
-    const distance = slideDistance(direction, { columns: this.dotColumnCount });
+    const spec = this.transitionPhase === TransitionPhase.In ? this.enterConfig : this.exitConfig;
+    const distance = slideDistance(spec.direction, { columns: this.dotColumnCount });
     return this.slide.run$(distance);
   };
 
@@ -240,13 +247,13 @@ class MessageBoard extends DotMatrix {
    */
   private get messageStartPos(): DotPosition {
     let startX = this.dotRadius + MessageBoardConfig.BumperWidth * this.dotUnit;
-    let startY = this.dotUnit * (BoardDefault.PaddingY + BoardDefault.MessageMargin) + this.dotRadius;
+    let startY = this.dotUnit * (MessageBoardConfig.PaddingY + DefaultBoardConfig.MessageMargin) + this.dotRadius;
     let msgLength = getMessageLength(this.currentMessage);
 
     if (!this.messageOverflow(this.currentMessage)) {
       startX += Math.floor((this.dotColumnCount - MessageBoardConfig.BumperWidth * 2 - msgLength) / 2) * this.dotUnit; // Center align
     } else {
-      startX += BoardDefault.MessageMargin * this.dotUnit; // Left align with padding
+      startX += DefaultBoardConfig.MessageMargin * this.dotUnit; // Left align with padding
     }
 
     return { xPos: startX, yPos: startY };

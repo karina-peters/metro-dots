@@ -5,7 +5,7 @@ import { CanvasSize } from "../models/board.model.ts";
 import { BACKGROUND_COLOR, DotColor } from "../models/colors.model.ts";
 import { TransitionPhase } from "../models/animation.model.ts";
 
-import { BoardDefault, Dot } from "../config/board.config.ts";
+import { DefaultBoardConfig, Dot } from "../config/board.config.ts";
 import { fontData, FONT_WIDTH } from "../helpers/dotFont.ts";
 
 interface Animation {
@@ -27,7 +27,7 @@ abstract class DotMatrix {
   protected dotUnit: number = Dot.Unit;
   protected dotColumnCount: number;
   protected dotRowCount: number;
-  protected textField: { top: number; right: number; bottom: number; left: number };
+  protected textField = { top: 0, right: 0, bottom: 0, left: 0 };
   protected scale: number = 1;
   protected canvasSize: CanvasSize = { width: 0, height: 0 };
   protected isInTransition = true;
@@ -41,13 +41,6 @@ abstract class DotMatrix {
   constructor(numRows: number, numCols: number) {
     this.dotColumnCount = numCols;
     this.dotRowCount = numRows;
-
-    this.textField = {
-      top: BoardDefault.PaddingY * this.dotUnit,
-      right: (this.dotColumnCount - BoardDefault.PaddingX - BoardDefault.MessageMargin) * this.dotUnit - this.dotGap,
-      bottom: (this.dotRowCount - BoardDefault.PaddingY - BoardDefault.MessageMargin) * this.dotUnit - this.dotGap,
-      left: (BoardDefault.PaddingX + BoardDefault.MessageMargin) * this.dotUnit,
-    };
   }
 
   protected abstract setCanvasSize(): void;
@@ -123,6 +116,8 @@ abstract class DotMatrix {
    * @param color - Color to render the char in
    */
   protected renderChar(p: p5, char: string, startX: number, startY: number, color: string) {
+    p.ellipseMode(p.RADIUS);
+
     const charMatrix = fontData.get(char.toUpperCase()) || fontData.get(" ") || []; // Default to space if character not found
     const { top, right, bottom, left } = this.textField;
 
@@ -134,7 +129,6 @@ abstract class DotMatrix {
       for (const dotVal of row) {
         if (dotVal === 1 && dotY >= top && dotX <= right && dotY <= bottom && dotX >= left) {
           p.fill(color);
-          p.ellipseMode(p.RADIUS);
           p.ellipse(dotX, dotY, this.dotRadius, this.dotRadius);
         }
 
@@ -164,7 +158,7 @@ abstract class DotMatrix {
  * @returns Length of the message in dot matrix columns
  */
 export function getMessageLength(message: string): number {
-  return message.length * (FONT_WIDTH + BoardDefault.CharGap) - BoardDefault.CharGap;
+  return message.length * (FONT_WIDTH + DefaultBoardConfig.CharGap) - DefaultBoardConfig.CharGap;
 }
 
 export default DotMatrix;

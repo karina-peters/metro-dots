@@ -14,6 +14,8 @@ const HEADER_ARRAY = ["LINE", "CAR", "DEST", "MIN"];
 const DEFAULT_ID = "college-park-u-of-md";
 const DEFAULT_PLATFORM = "E09";
 const DEFAULT_TRACK: Track = 1;
+const HIDDEN_COL = 1;
+const TIME_COL = 3;
 
 enum ActionType {
   ChangeStation,
@@ -65,10 +67,9 @@ export function render(): void {
   renderStationList();
   attachEventListeners();
 
-  // Construct board from the current selection
-  const { track } = selection$.value;
+  // Construct board
   const boardTarget: HTMLElement = getElement(".board-target");
-  const board = new TableBoard(boardTarget, HEADER_ARRAY, [], track);
+  const board = new TableBoard(boardTarget, HEADER_ARRAY, [], TIME_COL, HIDDEN_COL);
   new p5(board.sketch, boardTarget);
   stationBoard = board;
 
@@ -210,6 +211,7 @@ function subscribeToDataUpdates(board: TableBoard) {
         combineLatest([selection$, pollArrivals(stationId)]).pipe(
           map(([selection, arrivals]) => ({
             dataId: selection.stationId,
+            viewKey: `${selection.platformCode}|${selection.track}`,
             messageTable: getMessageTable(selection.platformCode, selection.track, arrivals),
           })),
         ),
