@@ -27,6 +27,7 @@ import { FONT_HEIGHT, FONT_WIDTH } from "../helpers/dotFont.ts";
 
 import DotMatrix, { getMessageLength } from "./dotMatrix.ts";
 import { Typewriter } from "../helpers/typeAnimation.ts";
+import { Blinker } from "../helpers/blinkAnimation.ts";
 
 const COLUMN_LAYOUT: ColumnType[] = [ColumnType.Hug, ColumnType.Hug, ColumnType.Fill, ColumnType.Hug] as const;
 
@@ -47,12 +48,13 @@ class TableBoard extends DotMatrix {
   // Animations
   private readonly typewriterOpts = { typeSpeedMs: TableBoardConfig.TypeSpeedMs, eraseSpeedMs: TableBoardConfig.TypeSpeedMs };
   private typewriter = new Typewriter(this.typewriterOpts, () => this.redraw$.next(), this.destroy$);
+  private readonly blinkerOpts = {
+    intervalMs: TableBoardConfig.BlinkIntervalMs,
+    count: TableBoardConfig.BlinkCount,
+    greyHoldMs: TableBoardConfig.BlinkIntervalMs,
+  };
+  private blinker = new Blinker(this.blinkerOpts, () => this.redraw$.next(), this.destroy$);
   private liveUpdate$ = new Subject<string[][] | null>();
-  private droppingRow = false;
-  private isBlinking = false;
-  private blinkingRows: number[] = [];
-  private blinkMode: BlinkMode | null = null;
-  private blinkOff = false;
 
   // Layout
   private columnToHide: number | null;
@@ -214,15 +216,14 @@ class TableBoard extends DotMatrix {
 
   private doUpdateAnimation$(incoming: string[][]) {
     const droppedRow = this.rowDrop(this.messageTable, incoming);
-
     const blinkUpdates$ = defer(() => {
       const updated = this.rowDataUpdates(this.messageTable, incoming);
       this.messageTable = incoming;
       this.redraw$.next();
-      return updated.length ? this.blinkRows$(BlinkMode.UpdateCol, updated) : EMPTY;
+      return updated.length ? this.blinker.blink$(BlinkMode.UpdateCol, updated) : EMPTY;
     });
 
-    return (droppedRow ? this.dropRow$() : blinkUpdates$).pipe(
+    return (droppedRow ? this.blinker.dropRow$(0) : blinkUpdates$).pipe(
       finalize(() => {
         this.messageTable = incoming;
         this.redraw$.next();
@@ -237,52 +238,9 @@ class TableBoard extends DotMatrix {
     return this.typewriter.run$(mode, includeHeading ? rows : rows.slice(1));
   };
 
-  private blinkRows$ = (mode: BlinkMode, rows: number[]): Observable<number> => {
-    console.log(`blinking ${mode === BlinkMode.Row ? "" : `column ${this.columnToUpdate} of `}rows[${rows}]...`);
-
-    return defer(() => {
-      this.isBlinking = true;
-      this.blinkMode = mode;
-      this.blinkingRows = rows;
-
-      return timer(0, TableBoardConfig.BlinkIntervalMs).pipe(
-        take(TableBoardConfig.BlinkCount * 2),
-        tap((i) => {
-          this.blinkOff = i % 2 === 0; // start "off" so the new value flashes
-          this.redraw$.next();
-        }),
-        finalize(() => {
-          this.blinkOff = false;
-          this.blinkMode = null;
-          this.isBlinking = false;
-          this.blinkingRows = [];
-          this.redraw$.next();
-        }),
-      );
-    });
-  };
-
-  private dropRow$ = (): Observable<number> => {
-    console.log("dropping row...");
-
-    return concat(
-      defer(() => {
-        this.droppingRow = true;
-        this.redraw$.next();
-        return timer(TableBoardConfig.BlinkIntervalMs);
-      }),
-      this.blinkRows$(BlinkMode.Row, [0]),
-    ).pipe(
-      finalize(() => {
-        this.droppingRow = false;
-      }),
-    );
-  };
-
   private renderRow(p: p5, row: string[], rowIndex: number, color: DotColor) {
     const dataRowIndex = rowIndex - 1;
-    const rowBlinking = this.isBlinking && this.blinkingRows.includes(dataRowIndex);
-    const baseColor = this.droppingRow && dataRowIndex === 0 ? DotColor.Dim : color;
+    const baseColor = this.blinker.isGreyed(dataRowIndex) ? DotColor.Dim : color;
 
     let adjustedColIndex = 0;
 
@@ -298,11 +256,7 @@ class TableBoard extends DotMatrix {
         continue;
       }
 
-      const blinkingThisCol =
-        this.blinkMode === BlinkMode.Row || (this.blinkMode === BlinkMode.UpdateCol && colIndex === this.columnToUpdate);
-      const blankedByBlink = blinkingThisCol && rowBlinking && this.blinkOff;
-
-      if (!blankedByBlink) {
+      if (!this.blinker.isBlanked(dataRowIndex, colIndex, this.columnToUpdate)) {
         let { xPos, yPos } = this.calcStartPos(rowIndex, adjustedColIndex);
         let charStartX = xPos;
 
