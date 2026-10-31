@@ -1,35 +1,26 @@
 import p5 from "p5";
-import {
-  tap,
-  switchMap,
-  takeUntil,
-  of,
-  delay,
-  finalize,
-  map,
-  EMPTY,
-  catchError,
-  distinctUntilChanged,
-  Subject,
-  defer,
-  take,
-  timer,
-  concat,
-  Observable,
-} from "rxjs";
+import { tap, switchMap, takeUntil, of, finalize, map, EMPTY, catchError, distinctUntilChanged, Subject, defer, forkJoin } from "rxjs";
 
-import { DotColor } from "../models/colors.model.ts";
-import { BlinkMode, TransitionPhase, TypeMode } from "../models/animation.model.ts";
-import type { TableColumnSpec, DotPosition, TableBoardData, TableLayoutInput, TableLayout, TableCell } from "../models/board.model.ts";
+import { DotColor } from "@models/colors.model.ts";
+import { BlinkMode, TransitionPhase, TypeMode } from "@models/animation.model.ts";
+import type {
+  TableColumnSpec,
+  DotPosition,
+  TableBoardData,
+  TableLayoutInput,
+  TableLayout,
+  ColumnGeometry,
+  TableBoardOptions,
+} from "@models/board.model.ts";
 
-import { DefaultBoardConfig, ColumnType, PAGE_PADDING_PX, TableBoardConfig } from "../config/board.config.ts";
-import { FONT_HEIGHT, FONT_WIDTH } from "../helpers/dotFont.ts";
+import { DefaultBoardConfig, ColumnType, PAGE_PADDING_PX, TableBoardConfig, ColumnAlign } from "@config/board.config.ts";
+
+import { FONT_HEIGHT, FONT_WIDTH } from "@helpers/dotFont.ts";
+import { Typewriter } from "@helpers/animation/typeAnimation.ts";
+import { Blinker } from "@helpers/animation/blinkAnimation.ts";
+import { OffsetAnimation } from "@helpers/animation/offsetAnimation.ts";
 
 import DotMatrix, { getMessageLength } from "./dotMatrix.ts";
-import { Typewriter } from "../helpers/typeAnimation.ts";
-import { Blinker } from "../helpers/blinkAnimation.ts";
-
-const COLUMN_LAYOUT: ColumnType[] = [ColumnType.Hug, ColumnType.Hug, ColumnType.Fill, ColumnType.Hug] as const;
 
 class TableBoard extends DotMatrix {
   public data$: Subject<TableBoardData> = new Subject<TableBoardData>();
@@ -48,43 +39,33 @@ class TableBoard extends DotMatrix {
   // Animations
   private readonly typewriterOpts = { typeSpeedMs: TableBoardConfig.TypeSpeedMs, eraseSpeedMs: TableBoardConfig.TypeSpeedMs };
   private typewriter = new Typewriter(this.typewriterOpts, () => this.redraw$.next(), this.destroy$);
-  private readonly blinkerOpts = {
-    intervalMs: TableBoardConfig.BlinkIntervalMs,
-    count: TableBoardConfig.BlinkCount,
-    greyHoldMs: TableBoardConfig.BlinkIntervalMs,
-  };
+  private readonly blinkerOpts = { intervalMs: TableBoardConfig.BlinkIntervalMs, count: TableBoardConfig.BlinkCount };
   private blinker = new Blinker(this.blinkerOpts, () => this.redraw$.next(), this.destroy$);
   private liveUpdate$ = new Subject<string[][] | null>();
+  private readonly scrollOpts = { intervalMs: TableBoardConfig.ScrollSpeedMs, step: 1 };
+  private bumper = new OffsetAnimation(this.scrollOpts, () => this.redraw$.next(), this.destroy$);
 
   // Layout
   private columnToHide: number | null;
   private columnToUpdate: number | null;
-  private columnStartDots: number[] = [];
+  private columns = new Map<number, ColumnGeometry>();
+  private bumperBand: number[] = [];
 
   private parentElt: HTMLElement;
+  private readonly opts: TableBoardOptions;
 
-  constructor(
-    parentElt: HTMLElement,
-    tableHeader: string[],
-    messageTable: string[][],
-    updateCol: number | null = null,
-    hiddenCol: number | null = null,
-  ) {
+  constructor(parentElt: HTMLElement, opts: TableBoardOptions) {
     super(TableBoardConfig.Height, DefaultBoardConfig.Width);
 
     this.parentElt = parentElt;
+    this.opts = opts;
 
-    this.tableHeader = tableHeader;
-    this.columnToHide = hiddenCol;
-    this.columnToUpdate = updateCol;
-    this.columnStartDots = this.calcColumnStartDots();
-    this.messageTable = messageTable;
+    this.tableHeader = opts.header;
+    this.messageTable = opts.rows;
+    this.columnToUpdate = opts.updateCol ?? null;
+    this.columnToHide = opts.hiddenCol ?? null;
 
     this.setCanvasSize();
-  }
-
-  protected rowKey(row: string[]): string {
-    return row.filter((_, i) => i !== this.columnToUpdate).join("|");
   }
 
   protected override setCanvasSize() {
@@ -94,14 +75,15 @@ class TableBoard extends DotMatrix {
       availableSpace,
       dotUnit: this.dotUnit,
       dotGap: this.dotGap,
-      minWidthWide: calcMinBoardWidth(this.tableHeader, false, this.columnToHide),
-      minWidthNarrow: calcMinBoardWidth(this.tableHeader, true, this.columnToHide),
+      minWidthWide: calcMinBoardWidth(this.opts, false),
+      minWidthNarrow: calcMinBoardWidth(this.opts, true),
     });
 
     this.columnHidden = layout.columnHidden;
     this.dotColumnCount = layout.dotColumnCount;
     this.scale = layout.scale;
-    this.columnStartDots = this.calcColumnStartDots();
+    this.columns = this.calcColumns();
+    this.bumperBand = this.calcBumperBands();
 
     this.canvasSize = {
       width: this.scale * this.dotColumnCount * this.dotUnit - this.dotGap,
@@ -177,22 +159,43 @@ class TableBoard extends DotMatrix {
     }
   }
 
-  /**
-   * Starts transition animation for newly selected data
-   * @param p - p5.js instance
-   * @param newDataId - id of the newly selected data
-   * @returns an Observable of the transition animation
-   */
+  protected override backgroundDotColor(row: number, col: number): string {
+    const bumper = this.opts.bumper;
+    if (!bumper || !this.columns.has(bumper.col)) {
+      return DotColor.Off; // Column hidden
+    }
+
+    const dataRow = this.bumperBand[row];
+    const cells = dataRow >= 0 ? this.messageTable[dataRow] : undefined;
+    if (!cells) {
+      return DotColor.Off; // Not within bumper bounds
+    }
+
+    const visible = this.getBumperVisible(dataRow);
+    if (col >= Math.min(TableBoardConfig.BumperWidth, visible)) {
+      return DotColor.Off; // Not scrolled in yet
+    }
+
+    if (this.blinker.isBlanked(dataRow, bumper.col, this.columnToUpdate)) {
+      return DotColor.Off;
+    }
+
+    if (this.blinker.isGreyed(dataRow)) {
+      return DotColor.Dim;
+    }
+
+    return bumper.colorFor(cells[bumper.col]) || DotColor.Off;
+  }
+
   private doTransition$ = (newDataId: string | undefined) => {
     this.liveUpdate$.next(null); // cancel update animations
     this.isInTransition = true;
 
     return of(null).pipe(
       takeUntil(this.destroy$),
-      delay(TableBoardConfig.TransitionDelayMs),
       switchMap(() => {
         this.transitionPhase = TransitionPhase.Out;
-        return this.dataId ? this.typeContent$(TypeMode.Out, false) : of(null);
+        return this.dataId ? forkJoin([this.animateBumpers$(false), this.typeContent$(TypeMode.Out, false)]) : of(null);
       }),
       map(() => {
         this.transitionPhase = TransitionPhase.Change;
@@ -206,24 +209,25 @@ class TableBoard extends DotMatrix {
       }),
       switchMap((enterHeading) => {
         this.transitionPhase = TransitionPhase.In;
-        return newDataId ? this.typeContent$(TypeMode.In, enterHeading) : of(null);
+        return newDataId ? forkJoin([this.typeContent$(TypeMode.In, enterHeading), this.animateBumpers$(enterHeading)]) : of(null);
       }),
       finalize(() => {
+        this.transitionPhase = TransitionPhase.None;
         this.isInTransition = false;
       }),
     );
   };
 
   private doUpdateAnimation$(incoming: string[][]) {
-    const droppedRow = this.rowDrop(this.messageTable, incoming);
+    const isDroppingRow = this.isRowDrop(this.messageTable, incoming);
     const blinkUpdates$ = defer(() => {
-      const updated = this.rowDataUpdates(this.messageTable, incoming);
+      const updated = this.getUpdatedRows(this.messageTable, incoming);
       this.messageTable = incoming;
       this.redraw$.next();
       return updated.length ? this.blinker.blink$(BlinkMode.UpdateCol, updated) : EMPTY;
     });
 
-    return (droppedRow ? this.blinker.dropRow$(0) : blinkUpdates$).pipe(
+    return (isDroppingRow ? this.blinker.dropRow$(0) : blinkUpdates$).pipe(
       finalize(() => {
         this.messageTable = incoming;
         this.redraw$.next();
@@ -238,38 +242,105 @@ class TableBoard extends DotMatrix {
     return this.typewriter.run$(mode, includeHeading ? rows : rows.slice(1));
   };
 
+  private animateBumpers$ = (typingHeading: boolean) => {
+    console.log(`animating bumpers ${this.transitionPhase}...`);
+
+    return this.bumper.run$(this.bumperScrollDistance, typingHeading ? this.headerTypingMs : 0);
+  };
+
   private renderRow(p: p5, row: string[], rowIndex: number, color: DotColor) {
     const dataRowIndex = rowIndex - 1;
-    const baseColor = this.blinker.isGreyed(dataRowIndex) ? DotColor.Dim : color;
-
-    let adjustedColIndex = 0;
+    const greyed = this.blinker.isGreyed(dataRowIndex);
+    const rowColor = greyed ? DotColor.Dim : color;
+    const advance = (FONT_WIDTH + DefaultBoardConfig.CharGap) * this.dotUnit;
 
     for (const [colIndex, str] of row.entries()) {
-      // Skip rendering untyped cells
       const limit = this.typewriter.charLimit(rowIndex, colIndex);
       if (limit === 0) {
-        return;
+        return; // Untyped cells
       }
 
-      // Skip rendering the hidden column
-      if (this.columnHidden && colIndex === this.columnToHide) {
-        continue;
+      if (!this.columns.has(colIndex)) {
+        continue; // Hidden column
       }
 
-      if (!this.blinker.isBlanked(dataRowIndex, colIndex, this.columnToUpdate)) {
-        let { xPos, yPos } = this.calcStartPos(rowIndex, adjustedColIndex);
-        let charStartX = xPos;
-
-        const strSanitized = str || "-";
-        for (const char of strSanitized.slice(0, Math.min(limit, TableBoardConfig.MaxMessageLength))) {
-          const charColor = colIndex === 1 && char === "8" ? DotColor.Highlight : baseColor;
-          this.renderChar(p, char, charStartX, yPos, charColor);
-          charStartX += (FONT_WIDTH + DefaultBoardConfig.CharGap) * this.dotUnit;
-        }
+      if (this.blinker.isBlanked(dataRowIndex, colIndex, this.columnToUpdate)) {
+        continue; // Blinking
       }
 
-      adjustedColIndex++;
+      const text = row[colIndex] || "-";
+      const count = Math.min(limit, TableBoardConfig.MaxMessageLength, text.length);
+      const { xPos, yPos } = this.calcStartPos(rowIndex, colIndex);
+      const colorOverride = this.opts.charColor;
+
+      let x = xPos + this.getAlignmentOffset(colIndex, text) * this.dotUnit;
+      for (let i = 0; i < count; i++) {
+        const char = text[i];
+        const color = greyed ? rowColor : colorOverride?.(colIndex, char) || rowColor;
+        this.renderChar(p, char, x, yPos, color);
+        x += advance;
+      }
     }
+  }
+
+  private getBumperVisible(dataRow: number): number {
+    switch (this.transitionPhase) {
+      case TransitionPhase.In:
+        return this.bumper.active ? this.getBumperProgress(dataRow, TableBoardConfig.BumperWidth) : TableBoardConfig.BumperWidth;
+      case TransitionPhase.Change:
+        return 0;
+      case TransitionPhase.Out:
+        return this.bumper.active ? TableBoardConfig.BumperWidth - this.getBumperProgress(dataRow, TableBoardConfig.BumperWidth) : 0;
+      default:
+        return TableBoardConfig.BumperWidth;
+    }
+  }
+
+  private getBumperProgress(dataRow: number, width: number): number {
+    const slot = this.transitionPhase === TransitionPhase.Out ? this.messageTable.length - 1 - dataRow : dataRow;
+    return Math.min(width, Math.max(0, this.bumper.progress - slot * width));
+  }
+
+  private getUpdatedRows(current: string[][], incoming: string[][]): number[] {
+    const changed = [];
+
+    for (const [r_idx, row] of incoming.entries()) {
+      const prev = current[r_idx];
+      const rowsMatch = prev && this.getRowKey(prev) === this.getRowKey(row);
+      const columnUpdated = prev && this.columnToUpdate !== null && prev[this.columnToUpdate] !== row[this.columnToUpdate];
+
+      if (rowsMatch && columnUpdated) {
+        changed.push(r_idx);
+      }
+    }
+
+    return changed;
+  }
+
+  private getRowKey(row: string[]): string {
+    return row.filter((_, i) => i !== this.columnToUpdate).join("|");
+  }
+
+  private getAlignmentOffset(colIndex: number, text: string): number {
+    const col = this.columns.get(colIndex);
+    if (!col) {
+      return 0;
+    }
+
+    const free = Math.max(0, col.width - getMessageLength(text));
+    switch (col.align) {
+      case ColumnAlign.Center:
+        return Math.floor(free / 2);
+      case ColumnAlign.Right:
+        return free;
+      case ColumnAlign.Left:
+      default:
+        return 0;
+    }
+  }
+
+  private isRowDrop(current: string[][], incoming: string[][]): boolean {
+    return this.getRowKey(current[0]) !== this.getRowKey(incoming[0]);
   }
 
   /**
@@ -278,15 +349,21 @@ class TableBoard extends DotMatrix {
    *
    * @returns x and y coordinates in pixels
    */
-  private calcStartPos(row: number, adjustedCol: number): DotPosition {
-    const startX = this.dotRadius + this.columnStartDots[adjustedCol] * this.dotUnit;
+  private calcStartPos(row: number, colIndex: number): DotPosition {
+    const startX = this.dotRadius + this.columns.get(colIndex)!.start * this.dotUnit;
     const startY = this.dotRadius + (row * (FONT_HEIGHT + TableBoardConfig.RowGap) + TableBoardConfig.PaddingY) * this.dotUnit;
 
     return { xPos: startX, yPos: startY };
   }
 
-  private calcColumnStartDots(): number[] {
-    const visibleColumns = getVisibleColumns(this.tableHeader, this.columnHidden, this.columnToHide);
+  /**
+   * Calculates the start position and width (in dots) for each column
+   * Adjusts for column type and alignment defined in the COLUMN_LAYOUT
+   *
+   * @returns a map of column geometry in dots
+   */
+  private calcColumns(): Map<number, ColumnGeometry> {
+    const visibleColumns = getVisibleColumns(this.opts, this.columnHidden);
 
     // Handle hug columns
     const hugWidth = (text: string) => getMessageLength(text) + TableBoardConfig.ColGap;
@@ -302,31 +379,51 @@ class TableBoard extends DotMatrix {
     const fillWidth = fillCount > 0 ? Math.max(0, available / fillCount) : 0;
 
     let startDot = TableBoardConfig.PaddingX;
-    return visibleColumns.map((c) => {
-      const colStart = startDot;
-      startDot += c.type === ColumnType.Hug ? hugWidth(c.text) : fillWidth;
-      return colStart;
-    });
+    return new Map(
+      visibleColumns.map((c) => {
+        const isHug = c.type === ColumnType.Hug;
+        const geometry: ColumnGeometry = {
+          start: startDot,
+          width: isHug ? getMessageLength(c.text) : Math.max(0, fillWidth - TableBoardConfig.ColGap),
+          align: c.align,
+        };
+        startDot += isHug ? hugWidth(c.text) : fillWidth;
+        return [c.index, geometry];
+      }),
+    );
   }
 
-  private rowDataUpdates(current: string[][], incoming: string[][]): number[] {
-    const changed = [];
+  /**
+   * Calculates which dot rows fall within the vertical bounds of a bumper
+   *
+   * @returns an array indexed by dot row
+   */
+  private calcBumperBands(): number[] {
+    const pitch = FONT_HEIGHT + TableBoardConfig.RowGap;
+    const offsetY = Math.floor((FONT_HEIGHT - TableBoardConfig.BumperHeight) / 2);
+    const bandTop = (tableRow: number) => TableBoardConfig.PaddingY + tableRow * pitch + offsetY;
 
-    for (const [r_idx, row] of incoming.entries()) {
-      const prev = current[r_idx];
-      const rowsMatch = prev && this.rowKey(prev) === this.rowKey(row);
-      const columnUpdated = prev && this.columnToUpdate !== null && prev[this.columnToUpdate] !== row[this.columnToUpdate];
+    const bumperBand = new Array(this.dotRowCount).fill(-1);
+    for (let tableRow = 1; bandTop(tableRow) < this.dotRowCount; tableRow++) {
+      const first = Math.max(0, bandTop(tableRow));
+      const last = Math.min(this.dotRowCount, bandTop(tableRow) + TableBoardConfig.BumperHeight);
 
-      if (rowsMatch && columnUpdated) {
-        changed.push(r_idx);
+      const dataRow = tableRow - 1;
+      for (let dotRow = first; dotRow < last; dotRow++) {
+        bumperBand[dotRow] = dataRow;
       }
     }
 
-    return changed;
+    return bumperBand;
   }
 
-  private rowDrop(current: string[][], incoming: string[][]): boolean {
-    return this.rowKey(current[0]) !== this.rowKey(incoming[0]);
+  private get bumperScrollDistance(): number {
+    return TableBoardConfig.BumperWidth * this.messageTable.length;
+  }
+
+  private get headerTypingMs(): number {
+    const chars = this.tableHeader.reduce((n, text) => n + (text || "-").length, 0);
+    return (chars + 1) * this.typewriterOpts.typeSpeedMs;
   }
 }
 
@@ -356,9 +453,9 @@ function chooseTableLayout({ availableSpace, dotGap, dotUnit, minWidthWide, minW
   return layout;
 }
 
-function calcMinBoardWidth(tableHeader: string[], hidden: boolean, hiddenIndex: number | null = null): number {
+function calcMinBoardWidth(opts: TableBoardOptions, hidden: boolean): number {
   const minFillWidth = getMessageLength("0".repeat(TableBoardConfig.MaxMessageLength)) + TableBoardConfig.ColGap;
-  const contentWidth = getVisibleColumns(tableHeader, hidden, hiddenIndex).reduce(
+  const contentWidth = getVisibleColumns(opts, hidden).reduce(
     (sum, c) => sum + (c.type === ColumnType.Hug ? getMessageLength(c.text) + TableBoardConfig.ColGap : minFillWidth),
     0,
   );
@@ -366,10 +463,10 @@ function calcMinBoardWidth(tableHeader: string[], hidden: boolean, hiddenIndex: 
   return contentWidth + 2 * TableBoardConfig.PaddingX - TableBoardConfig.ColGap;
 }
 
-function getVisibleColumns(tableHeader: string[], hidden: boolean, hiddenIndex: number | null = null): TableColumnSpec[] {
-  return tableHeader
-    .map((text, index) => ({ text, index, type: COLUMN_LAYOUT[index] }))
-    .filter(({ index }) => !(hidden && index === hiddenIndex));
+function getVisibleColumns(opts: TableBoardOptions, hidden: boolean): TableColumnSpec[] {
+  return opts.header
+    .map((text, index) => ({ text, index, ...opts.layout[index] }))
+    .filter(({ index }) => !(hidden && index === opts.hiddenCol));
 }
 
 export default TableBoard;

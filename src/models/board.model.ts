@@ -1,4 +1,5 @@
-import { ColumnType } from "../config/board.config";
+import { ColumnAlign, ColumnType } from "@config/board.config";
+import { DotColor } from "./colors.model";
 
 export type BoardLayout = {
   numCols: number;
@@ -17,6 +18,24 @@ export type TableBoardData = {
   dataId: string | undefined;
   viewKey: string | undefined;
 };
+
+export interface ColumnLayout {
+  type: ColumnType;
+  align: ColumnAlign;
+}
+
+export interface TableBoardOptions {
+  header: string[];
+  rows: string[][];
+  layout: readonly ColumnLayout[];
+  updateCol?: number | null;
+  hiddenCol?: number | null;
+  bumper?: {
+    col: number;
+    colorFor: (value: string) => string | undefined;
+  };
+  charColor?: (col: number, char: string) => DotColor | undefined;
+}
 
 export type MessageBoardData = {
   messages: string[];
@@ -38,7 +57,14 @@ export type TableColumnSpec = {
   index: number;
   text: string;
   type: ColumnType;
+  align: ColumnAlign;
 };
+
+export interface ColumnGeometry {
+  start: number;
+  width: number;
+  align: ColumnAlign;
+}
 
 export type TableLayoutInput = {
   availableSpace: number;

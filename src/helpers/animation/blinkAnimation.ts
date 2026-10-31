@@ -1,5 +1,5 @@
 import { concat, defer, finalize, Observable, take, takeUntil, tap, timer } from "rxjs";
-import { BlinkMode } from "../models/animation.model.ts";
+import { BlinkMode } from "@models/animation.model.ts";
 
 export class Blinker {
   private mode: BlinkMode | null = null;
@@ -8,7 +8,7 @@ export class Blinker {
   private greyedRow: number | null = null;
 
   constructor(
-    private opts: { intervalMs: number; count: number; greyHoldMs: number },
+    private opts: { intervalMs: number; count: number },
     private onFrame: () => void,
     private readonly until$: Observable<void>,
   ) {}
@@ -18,7 +18,10 @@ export class Blinker {
   }
 
   isBlanked(row: number, col: number, updateCol: number | null) {
-    if (!this.off || !this.rows.has(row)) return false;
+    if (!this.off || !this.rows.has(row)) {
+      return false;
+    }
+
     return this.mode === BlinkMode.Row || col === updateCol;
   }
 
@@ -29,6 +32,7 @@ export class Blinker {
       return timer(0, this.opts.intervalMs).pipe(
         take(this.opts.count * 2),
         tap((i) => {
+          // TODO: make this start off
           this.off = i % 2 === 0;
           this.onFrame();
         }),
@@ -44,13 +48,10 @@ export class Blinker {
   }
 
   dropRow$(row: number): Observable<number> {
-    return concat(
-      defer(() => {
-        this.greyedRow = row;
-        this.onFrame();
-        return timer(this.opts.greyHoldMs);
-      }),
-      this.blink$(BlinkMode.Row, [row]),
-    ).pipe(finalize(() => (this.greyedRow = null)));
+    return defer(() => {
+      this.greyedRow = row;
+      this.onFrame();
+      return this.blink$(BlinkMode.Row, [row]);
+    }).pipe(finalize(() => (this.greyedRow = null)));
   }
 }

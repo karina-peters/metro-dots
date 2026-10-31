@@ -1,11 +1,13 @@
 import { BehaviorSubject, timer, Subscription, switchMap, from, map, combineLatest, distinctUntilChanged, catchError, of } from "rxjs";
 import p5 from "p5";
 
-import { REFRESH_RATE, metroSystem } from "../services/system.ts";
-import { getElement } from "../helpers/utils.ts";
-import type { Arrival } from "../models/system.model.ts";
+import { REFRESH_RATE, metroSystem } from "@services/system.ts";
+import { getElement } from "@helpers/utils.ts";
+import type { Arrival } from "@models/system.model.ts";
 
-import TableBoard from "../components/tableBoard.ts";
+import TableBoard from "@components/tableBoard.ts";
+import { ColumnAlign, ColumnType } from "@config/board.config";
+import { DotColor, LineColor } from "@models/colors.model";
 
 const HEADING_TEXT = "Stations";
 const ERROR_MSG_ARRAY = [":(", "", "Error", "?"];
@@ -14,7 +16,8 @@ const HEADER_ARRAY = ["LINE", "CAR", "DEST", "MIN"];
 const DEFAULT_ID = "college-park-u-of-md";
 const DEFAULT_PLATFORM = "E09";
 const DEFAULT_TRACK: Track = 1;
-const HIDDEN_COL = 1;
+const CAR_COL = 1;
+const HIDDEN_COL = CAR_COL;
 const TIME_COL = 3;
 
 enum ActionType {
@@ -69,7 +72,20 @@ export function render(): void {
 
   // Construct board
   const boardTarget: HTMLElement = getElement(".board-target");
-  const board = new TableBoard(boardTarget, HEADER_ARRAY, [], TIME_COL, HIDDEN_COL);
+  const board = new TableBoard(boardTarget, {
+    header: HEADER_ARRAY,
+    rows: [],
+    layout: [
+      { type: ColumnType.Hug, align: ColumnAlign.Right },
+      { type: ColumnType.Hug, align: ColumnAlign.Center },
+      { type: ColumnType.Fill, align: ColumnAlign.Left },
+      { type: ColumnType.Hug, align: ColumnAlign.Right },
+    ],
+    updateCol: TIME_COL,
+    hiddenCol: HIDDEN_COL,
+    bumper: { col: 0, colorFor: (line) => LineColor.get(line) },
+    charColor: (col, char) => (col === CAR_COL && char === "8" ? DotColor.Highlight : undefined),
+  });
   new p5(board.sketch, boardTarget);
   stationBoard = board;
 
