@@ -37,7 +37,7 @@ export enum TableBoardConfig {
   BumperHeight = FONT_HEIGHT + 2,
   BumperWidth = DefaultBoardConfig.MessageMargin + FONT_WIDTH * 2,
   Height = Rows * (FONT_HEIGHT + RowGap) - RowGap + 2 * PaddingY,
-  MaxMessageLength = 10,
+  MinFillChars = 10,
   TypeSpeedMs = 30,
   BlinkIntervalMs = 300,
   BlinkCount = 3,

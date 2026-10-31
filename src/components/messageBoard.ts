@@ -166,13 +166,6 @@ class MessageBoard extends DotMatrix {
       .subscribe();
   }
 
-  /**
-   * Starts transition animation for newly selected data
-   * @param p - p5.js instance
-   * @param newDataId - id of the newly selected data
-   * @param newBumperColor - bumper color for the newly selected data
-   * @returns an Observable of the transition animation
-   */
   private doTransition$ = (_p: p5, newDataId: string | undefined, newBumperColor: string | undefined) => {
     this.isInTransition = true;
     this.clearSubscriptions();
@@ -203,6 +196,7 @@ class MessageBoard extends DotMatrix {
     );
   };
 
+  // TODO - fix regression flickering when changing trains
   private get bumperVisible(): number {
     switch (this.transitionPhase) {
       case TransitionPhase.Out:

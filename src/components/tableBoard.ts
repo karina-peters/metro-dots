@@ -22,6 +22,8 @@ import { OffsetAnimation } from "@helpers/animation/offsetAnimation.ts";
 
 import DotMatrix, { getMessageLength } from "./dotMatrix.ts";
 
+const ELLIPSE_CHAR = "⃨";
+
 class TableBoard extends DotMatrix {
   public data$: Subject<TableBoardData> = new Subject<TableBoardData>();
   public sketch = this.createSketch();
@@ -46,8 +48,6 @@ class TableBoard extends DotMatrix {
   private bumper = new OffsetAnimation(this.scrollOpts, () => this.redraw$.next(), this.destroy$);
 
   // Layout
-  private columnToHide: number | null;
-  private columnToUpdate: number | null;
   private columns = new Map<number, ColumnGeometry>();
   private bumperBand: number[] = [];
 
@@ -62,8 +62,6 @@ class TableBoard extends DotMatrix {
 
     this.tableHeader = opts.header;
     this.messageTable = opts.rows;
-    this.columnToUpdate = opts.updateCol ?? null;
-    this.columnToHide = opts.hiddenCol ?? null;
 
     this.setCanvasSize();
   }
@@ -176,7 +174,7 @@ class TableBoard extends DotMatrix {
       return DotColor.Off; // Not scrolled in yet
     }
 
-    if (this.blinker.isBlanked(dataRow, bumper.col, this.columnToUpdate)) {
+    if (this.blinker.isBlanked(dataRow, bumper.col, this.opts.updateCol || null)) {
       return DotColor.Off;
     }
 
@@ -254,7 +252,7 @@ class TableBoard extends DotMatrix {
     const rowColor = greyed ? DotColor.Dim : color;
     const advance = (FONT_WIDTH + DefaultBoardConfig.CharGap) * this.dotUnit;
 
-    for (const [colIndex, str] of row.entries()) {
+    for (const [colIndex] of row.entries()) {
       const limit = this.typewriter.charLimit(rowIndex, colIndex);
       if (limit === 0) {
         return; // Untyped cells
@@ -264,18 +262,21 @@ class TableBoard extends DotMatrix {
         continue; // Hidden column
       }
 
-      if (this.blinker.isBlanked(dataRowIndex, colIndex, this.columnToUpdate)) {
+      if (this.blinker.isBlanked(dataRowIndex, colIndex, this.opts.updateCol || null)) {
         continue; // Blinking
       }
 
       const text = row[colIndex] || "-";
-      const count = Math.min(limit, TableBoardConfig.MaxMessageLength, text.length);
+      const colWidth = this.columns.get(colIndex)?.width;
+      const charFit = colWidth ? Math.ceil(colWidth / (FONT_WIDTH + DefaultBoardConfig.CharGap)) : TableBoardConfig.MinFillChars;
+      const truncText = getTrunctatedText(text, charFit);
+      const count = Math.min(limit, charFit, text.length);
       const { xPos, yPos } = this.calcStartPos(rowIndex, colIndex);
       const colorOverride = this.opts.charColor;
 
-      let x = xPos + this.getAlignmentOffset(colIndex, text) * this.dotUnit;
+      let x = xPos + this.getAlignmentOffset(colIndex, truncText) * this.dotUnit;
       for (let i = 0; i < count; i++) {
-        const char = text[i];
+        const char = truncText[i];
         const color = greyed ? rowColor : colorOverride?.(colIndex, char) || rowColor;
         this.renderChar(p, char, x, yPos, color);
         x += advance;
@@ -307,7 +308,7 @@ class TableBoard extends DotMatrix {
     for (const [r_idx, row] of incoming.entries()) {
       const prev = current[r_idx];
       const rowsMatch = prev && this.getRowKey(prev) === this.getRowKey(row);
-      const columnUpdated = prev && this.columnToUpdate !== null && prev[this.columnToUpdate] !== row[this.columnToUpdate];
+      const columnUpdated = prev && this.opts.updateCol && prev[this.opts.updateCol] !== row[this.opts.updateCol];
 
       if (rowsMatch && columnUpdated) {
         changed.push(r_idx);
@@ -318,7 +319,7 @@ class TableBoard extends DotMatrix {
   }
 
   private getRowKey(row: string[]): string {
-    return row.filter((_, i) => i !== this.columnToUpdate).join("|");
+    return row.filter((_, i) => i !== this.opts.updateCol).join("|");
   }
 
   private getAlignmentOffset(colIndex: number, text: string): number {
@@ -454,7 +455,7 @@ function chooseTableLayout({ availableSpace, dotGap, dotUnit, minWidthWide, minW
 }
 
 function calcMinBoardWidth(opts: TableBoardOptions, hidden: boolean): number {
-  const minFillWidth = getMessageLength("0".repeat(TableBoardConfig.MaxMessageLength)) + TableBoardConfig.ColGap;
+  const minFillWidth = getMessageLength("0".repeat(TableBoardConfig.MinFillChars)) + TableBoardConfig.ColGap;
   const contentWidth = getVisibleColumns(opts, hidden).reduce(
     (sum, c) => sum + (c.type === ColumnType.Hug ? getMessageLength(c.text) + TableBoardConfig.ColGap : minFillWidth),
     0,
@@ -467,6 +468,10 @@ function getVisibleColumns(opts: TableBoardOptions, hidden: boolean): TableColum
   return opts.header
     .map((text, index) => ({ text, index, ...opts.layout[index] }))
     .filter(({ index }) => !(hidden && index === opts.hiddenCol));
+}
+
+function getTrunctatedText(text: string, maxLength: number) {
+  return text.length > maxLength ? text.slice(0, maxLength - 1) + ELLIPSE_CHAR : text;
 }
 
 export default TableBoard;

@@ -433,6 +433,15 @@ const fontDataObject = {
     [0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0],
   ],
+  "⃨": [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [1, 0, 1, 0, 1],
+  ],
 };
 
 export const fontData = new Map<string, CharacterBitmap>(Object.entries(fontDataObject));
