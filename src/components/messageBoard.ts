@@ -112,8 +112,7 @@ class MessageBoard extends DotMatrix {
   protected override drawContent(p: p5): void {
     let { xPos, yPos } = this.messageStartPos;
 
-    // Don't render any content if the out animation has completed
-    if (this.transitionPhase === TransitionPhase.Out && !this.slide.active) {
+    if (this.messageHidden) {
       return;
     }
 
@@ -124,6 +123,7 @@ class MessageBoard extends DotMatrix {
     if (this.slide.active) {
       const spec = this.transitionPhase === TransitionPhase.In ? this.enterConfig : this.exitConfig;
       const d = slideDisplacement(spec.direction, spec.mode, this.slide.progress, this.slide.remaining);
+
       xPos += d.x * this.dotUnit;
       yPos += d.y * this.dotUnit;
     }
@@ -196,7 +196,6 @@ class MessageBoard extends DotMatrix {
     );
   };
 
-  // TODO - fix regression flickering when changing trains
   private get bumperVisible(): number {
     switch (this.transitionPhase) {
       case TransitionPhase.Out:
@@ -222,7 +221,6 @@ class MessageBoard extends DotMatrix {
 
   private slideMessage$ = () => {
     console.log(`sliding message ${this.transitionPhase}...`);
-
     const spec = this.transitionPhase === TransitionPhase.In ? this.enterConfig : this.exitConfig;
     const distance = slideDistance(spec.direction, { columns: this.dotColumnCount });
     return this.slide.run$(distance);
@@ -252,6 +250,17 @@ class MessageBoard extends DotMatrix {
     }
 
     return { xPos: startX, yPos: startY };
+  }
+
+  private get messageHidden(): boolean {
+    switch (this.transitionPhase) {
+      case TransitionPhase.Change:
+        return true;
+      case TransitionPhase.Out:
+        return !this.slide.active;
+      default:
+        return false;
+    }
   }
 
   private setMessage(index: number): void {
