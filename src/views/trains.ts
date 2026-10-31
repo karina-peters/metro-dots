@@ -1,12 +1,12 @@
 import { BehaviorSubject, Subscription, timer, combineLatest, switchMap, from, catchError, of, distinctUntilChanged } from "rxjs";
 import p5 from "p5";
 
-import { metroSystem, REFRESH_RATE } from "../services/system.ts";
-import { getElement } from "../helpers/utils.ts";
-import type { Train } from "../models/system.model.ts";
+import { metroSystem, REFRESH_RATE } from "@services/system.ts";
+import { getElement } from "@helpers/utils.ts";
+import type { Train } from "@models/system.model.ts";
 
-import MessageBoard from "../components/messageBoard.ts";
-import { DotColor, LineColor } from "../models/colors.model.ts";
+import MessageBoard from "@components/messageBoard.ts";
+import { DotColor, LineColor } from "@models/colors.model.ts";
 
 const HEADING_TEXT = "Trains";
 const EMPTY_MSG = "No trains running!";

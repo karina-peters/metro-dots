@@ -1,5 +1,5 @@
 import { Subject } from "rxjs";
-import type { State } from "../models/state.model.ts";
+import type { State } from "@models/state.model.ts";
 
 const state: State = { viewId: "" };
 

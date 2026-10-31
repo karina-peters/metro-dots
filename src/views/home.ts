@@ -1,5 +1,5 @@
-import { navigateTo } from "../helpers/state.ts";
-import { getElement } from "../helpers/utils.ts";
+import { navigateTo } from "@helpers/state.ts";
+import { getElement } from "@helpers/utils.ts";
 
 const headingText = "Home";
 const template = () => {

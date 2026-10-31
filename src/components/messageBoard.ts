@@ -16,13 +16,13 @@ import {
   Subject,
 } from "rxjs";
 
-import { DotColor } from "../models/colors.model.ts";
-import { AnimationType, SlideDirection, SlidePhase, TransitionPhase } from "../models/animation.model.ts";
-import type { MessageBoardData, DotPosition } from "../models/board.model.ts";
+import { DotColor } from "@models/colors.model.ts";
+import { AnimationType, SlideDirection, SlidePhase, TransitionPhase } from "@models/animation.model.ts";
+import type { MessageBoardData, DotPosition } from "@models/board.model.ts";
 
-import { Dot, DefaultBoardConfig, MessageBoardConfig, PAGE_PADDING_PX } from "../config/board.config.ts";
-import { OffsetAnimation, slideDisplacement, slideDistance } from "../helpers/offsetAnimation.ts";
-import { FONT_WIDTH } from "../helpers/dotFont.ts";
+import { Dot, DefaultBoardConfig, MessageBoardConfig, PAGE_PADDING_PX } from "@config/board.config.ts";
+import { OffsetAnimation, slideDisplacement, slideDistance } from "@helpers/animation/offsetAnimation.ts";
+import { FONT_WIDTH } from "@helpers/dotFont.ts";
 
 import DotMatrix, { getMessageLength } from "./dotMatrix.ts";
 
@@ -136,6 +136,13 @@ class MessageBoard extends DotMatrix {
     }
   }
 
+  protected override backgroundDotColor(_row: number, col: number): string {
+    const visible = this.bumperVisible;
+    const inBumper = col < visible || col >= this.dotColumnCount - visible;
+
+    return inBumper ? this.bumperColor : DotColor.Off;
+  }
+
   /**
    * Start or restart the message display timer
    * Handles static and scrolling display based on message length
@@ -166,7 +173,7 @@ class MessageBoard extends DotMatrix {
    * @param newBumperColor - bumper color for the newly selected data
    * @returns an Observable of the transition animation
    */
-  private doTransition$ = (p: p5, newDataId: string | undefined, newBumperColor: string | undefined) => {
+  private doTransition$ = (_p: p5, newDataId: string | undefined, newBumperColor: string | undefined) => {
     this.isInTransition = true;
     this.clearSubscriptions();
 
@@ -190,17 +197,11 @@ class MessageBoard extends DotMatrix {
         return forkJoin([this.animateBumpers$(), this.slideMessage$()]);
       }),
       finalize(() => {
+        this.transitionPhase = TransitionPhase.None;
         this.isInTransition = false;
       }),
     );
   };
-
-  protected override backgroundDotColor(_row: number, col: number): string {
-    const visible = this.bumperVisible;
-    const inBumper = col < visible || col >= this.dotColumnCount - visible;
-
-    return inBumper ? this.bumperColor : DotColor.Off;
-  }
 
   private get bumperVisible(): number {
     switch (this.transitionPhase) {

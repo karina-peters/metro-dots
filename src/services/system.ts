@@ -1,6 +1,6 @@
-import { fetchJsonData } from "../helpers/utils.ts";
-import { Circuit, Arrival, Station, Train } from "../models/system.model.ts";
-import { ArrivalDTO, RouteDTO, TrainDTO, CircuitDTO, StationDTO } from "../models/wmata.model.ts";
+import { fetchJsonData } from "@helpers/utils.ts";
+import { Circuit, Arrival, Station, Train } from "@models/system.model.ts";
+import { ArrivalDTO, RouteDTO, TrainDTO, CircuitDTO, StationDTO } from "@models/wmata.model.ts";
 
 export const REFRESH_RATE = 8000;
 export const ARRIVAL_GROUPS = ["1", "2"];
