@@ -14,7 +14,7 @@ export type BoardLayout = {
 };
 
 export type TableBoardData = {
-  messageTable: string[][];
+  messageTable: TableRow[];
   dataId: string | undefined;
   viewKey: string | undefined;
 };
@@ -26,7 +26,7 @@ export interface ColumnLayout {
 
 export interface TableBoardOptions {
   header: string[];
-  rows: string[][];
+  rows: TableRow[];
   layout: readonly ColumnLayout[];
   updateCol?: number | null;
   hiddenCol?: number | null;
@@ -79,6 +79,11 @@ export type TableLayout = {
   dotColumnCount: number;
   scale: number;
 };
+
+export interface TableRow {
+  id: number;
+  cells: string[];
+}
 
 export type TableCell = {
   row: number;

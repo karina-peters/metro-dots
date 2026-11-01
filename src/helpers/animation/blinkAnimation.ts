@@ -5,7 +5,7 @@ export class Blinker {
   private mode: BlinkMode | null = null;
   private rows = new Set<number>();
   private off = false;
-  private greyedRow: number | null = null;
+  private greyedRows: number[] = [];
 
   constructor(
     private opts: { intervalMs: number; count: number },
@@ -14,7 +14,7 @@ export class Blinker {
   ) {}
 
   isGreyed(row: number) {
-    return this.greyedRow === row;
+    return this.greyedRows.includes(row);
   }
 
   isBlanked(row: number, col: number, updateCol: number | null) {
@@ -47,11 +47,11 @@ export class Blinker {
     });
   }
 
-  dropRow$(row: number): Observable<number> {
+  dropRows$(rows: number[]): Observable<number> {
     return defer(() => {
-      this.greyedRow = row;
+      this.greyedRows = rows;
       this.onFrame();
-      return this.blink$(BlinkMode.Row, [row]);
-    }).pipe(finalize(() => (this.greyedRow = null)));
+      return this.blink$(BlinkMode.Row, rows);
+    }).pipe(finalize(() => (this.greyedRows = [])));
   }
 }

@@ -1,13 +1,14 @@
 import { BehaviorSubject, timer, Subscription, switchMap, from, map, combineLatest, distinctUntilChanged, catchError, of } from "rxjs";
 import p5 from "p5";
 
-import { REFRESH_RATE, metroSystem } from "@services/system.ts";
+import { REFRESH_RATE, metroSystem } from "@services/system.service.ts";
 import { getElement } from "@helpers/utils.ts";
-import type { Arrival } from "@models/system.model.ts";
 
 import TableBoard from "@components/tableBoard.ts";
 import { ColumnAlign, ColumnType } from "@config/board.config";
 import { DotColor, LineColor } from "@models/colors.model";
+import { TableRow } from "@models/board.model";
+import { ArrivalTracker, TrackedArrivalMap } from "@helpers/arrivalTracker";
 
 const HEADING_TEXT = "Stations";
 const ERROR_MSG_ARRAY = [":(", "", "Error", "?"];
@@ -219,19 +220,24 @@ function subscribeToSelectionChanges() {
  * @returns The subscription that manages polling and board updates.
  */
 function subscribeToDataUpdates(board: TableBoard) {
+  const tracker = new ArrivalTracker();
+
   return selection$
     .pipe(
       map((selection) => selection.stationId),
       distinctUntilChanged(),
-      switchMap((stationId) =>
-        combineLatest([selection$, pollArrivals(stationId)]).pipe(
+      switchMap((stationId) => {
+        tracker.reset();
+        const arrivals$ = pollArrivals(stationId).pipe(map((arrivals) => tracker.update(arrivals)));
+
+        return combineLatest([selection$, arrivals$]).pipe(
           map(([selection, arrivals]) => ({
             dataId: selection.stationId,
             viewKey: `${selection.platformCode}|${selection.track}`,
             messageTable: getMessageTable(selection.platformCode, selection.track, arrivals),
           })),
-        ),
-      ),
+        );
+      }),
     )
     .subscribe((data) => board.data$.next(data));
 }
@@ -247,18 +253,18 @@ function subscribeToDataUpdates(board: TableBoard) {
  * @param arrivals - Arrival data indexed by platform and track, or null if unavailable.
  * @returns The rows to display on the station board.
  */
-function getMessageTable(platformId: string, trackIndex: number, arrivals: Map<string, Map<string, Arrival[]>> | null) {
+function getMessageTable(platformId: string, trackIndex: number, arrivals: TrackedArrivalMap): TableRow[] {
   const platform = arrivals?.get(platformId);
   if (!platform) {
-    return [ERROR_MSG_ARRAY];
+    return [{ id: 500, cells: ERROR_MSG_ARRAY }];
   }
 
   const group = platform.get(String(trackIndex));
   if (!group?.length) {
-    return [EMPTY_MSG_ARRAY];
+    return [{ id: 200, cells: EMPTY_MSG_ARRAY }];
   }
 
-  return group.map(({ line, numCars, destName, min }) => [line, numCars, destName, min]);
+  return group.map(({ id, line, numCars, destName, min }) => ({ id: id, cells: [line, numCars, destName, min] }));
 }
 
 function renderStationList() {

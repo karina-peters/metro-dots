@@ -15,14 +15,14 @@ export type Line = {
   circuits: Circuit[];
 };
 
-export type Arrival = {
+export interface Arrival {
   numCars: string;
   destName: string;
   line: string;
   min: string;
   group: string;
   stnCode: string;
-};
+}
 
 export type Train = {
   id: string;

@@ -11,6 +11,7 @@ import type {
   TableLayout,
   ColumnGeometry,
   TableBoardOptions,
+  TableRow,
 } from "@models/board.model.ts";
 
 import { DefaultBoardConfig, ColumnType, PAGE_PADDING_PX, TableBoardConfig, ColumnAlign } from "@config/board.config.ts";
@@ -32,8 +33,8 @@ class TableBoard extends DotMatrix {
   private tableHeader: string[];
   private viewKey: string | undefined;
   private dataId: string | undefined;
-  private incomingTable: string[][] = [];
-  private messageTable: string[][];
+  private incomingTable: TableRow[] = [];
+  private messageTable: TableRow[];
 
   // Board State
   private columnHidden = false;
@@ -43,7 +44,7 @@ class TableBoard extends DotMatrix {
   private typewriter = new Typewriter(this.typewriterOpts, () => this.redraw$.next(), this.destroy$);
   private readonly blinkerOpts = { intervalMs: TableBoardConfig.BlinkIntervalMs, count: TableBoardConfig.BlinkCount };
   private blinker = new Blinker(this.blinkerOpts, () => this.redraw$.next(), this.destroy$);
-  private liveUpdate$ = new Subject<string[][] | null>();
+  private liveUpdate$ = new Subject<TableRow[] | null>();
   private readonly scrollOpts = { intervalMs: TableBoardConfig.ScrollSpeedMs, step: 1 };
   private bumper = new OffsetAnimation(this.scrollOpts, () => this.redraw$.next(), this.destroy$);
 
@@ -153,7 +154,7 @@ class TableBoard extends DotMatrix {
     this.renderRow(p, this.tableHeader, 0, DotColor.Heading);
 
     for (let [index, row] of this.messageTable.entries()) {
-      this.renderRow(p, row, index + 1, DotColor.On);
+      this.renderRow(p, row.cells, index + 1, DotColor.On);
     }
   }
 
@@ -164,7 +165,7 @@ class TableBoard extends DotMatrix {
     }
 
     const dataRow = this.bumperBand[row];
-    const cells = dataRow >= 0 ? this.messageTable[dataRow] : undefined;
+    const cells = dataRow >= 0 ? this.messageTable[dataRow]?.cells : undefined;
     if (!cells) {
       return DotColor.Off; // Not within bumper bounds
     }
@@ -216,8 +217,7 @@ class TableBoard extends DotMatrix {
     );
   };
 
-  private doUpdateAnimation$(incoming: string[][]) {
-    const isDroppingRow = this.isRowDrop(this.messageTable, incoming);
+  private doUpdateAnimation$(incoming: TableRow[]) {
     const blinkUpdates$ = defer(() => {
       const updated = this.getUpdatedRows(this.messageTable, incoming);
       this.messageTable = incoming;
@@ -225,7 +225,8 @@ class TableBoard extends DotMatrix {
       return updated.length ? this.blinker.blink$(BlinkMode.UpdateCol, updated) : EMPTY;
     });
 
-    return (isDroppingRow ? this.blinker.dropRow$(0) : blinkUpdates$).pipe(
+    const droppedRows = this.droppedRows(this.messageTable, incoming);
+    return (droppedRows.length > 0 ? this.blinker.dropRows$(droppedRows) : blinkUpdates$).pipe(
       finalize(() => {
         this.messageTable = incoming;
         this.redraw$.next();
@@ -236,7 +237,8 @@ class TableBoard extends DotMatrix {
   private typeContent$ = (mode: TypeMode, includeHeading: boolean) => {
     console.log(`typing message ${mode}...`);
 
-    const rows = [this.tableHeader, ...this.messageTable].map((cells, rowIndex) => ({ cells, rowIndex }));
+    const messages = this.messageTable.map((r) => r.cells);
+    const rows = [this.tableHeader, ...messages].map((cells, rowIndex) => ({ cells, rowIndex }));
     return this.typewriter.run$(mode, includeHeading ? rows : rows.slice(1));
   };
 
@@ -302,24 +304,17 @@ class TableBoard extends DotMatrix {
     return Math.min(width, Math.max(0, this.bumper.progress - slot * width));
   }
 
-  private getUpdatedRows(current: string[][], incoming: string[][]): number[] {
-    const changed = [];
-
-    for (const [r_idx, row] of incoming.entries()) {
-      const prev = current[r_idx];
-      const rowsMatch = prev && this.getRowKey(prev) === this.getRowKey(row);
-      const columnUpdated = prev && this.opts.updateCol && prev[this.opts.updateCol] !== row[this.opts.updateCol];
-
-      if (rowsMatch && columnUpdated) {
-        changed.push(r_idx);
-      }
+  private getUpdatedRows(current: TableRow[], incoming: TableRow[]): number[] {
+    const col = this.opts.updateCol || this.columns.size - 1;
+    if (col === null) {
+      return [];
     }
 
-    return changed;
-  }
-
-  private getRowKey(row: string[]): string {
-    return row.filter((_, i) => i !== this.opts.updateCol).join("|");
+    const prevById = new Map(current.map((r) => [r.id, r]));
+    return incoming.flatMap((row, i) => {
+      const prev = prevById.get(row.id);
+      return prev && prev.cells[col] !== row.cells[col] ? [i] : [];
+    });
   }
 
   private getAlignmentOffset(colIndex: number, text: string): number {
@@ -340,8 +335,10 @@ class TableBoard extends DotMatrix {
     }
   }
 
-  private isRowDrop(current: string[][], incoming: string[][]): boolean {
-    return this.getRowKey(current[0]) !== this.getRowKey(incoming[0]);
+  private droppedRows(current: TableRow[], incoming: TableRow[]): number[] {
+    const incomingIds = new Set(incoming.map((row) => row.id));
+
+    return current.flatMap((row, index) => (incomingIds.has(row.id) ? [] : [index]));
   }
 
   /**
