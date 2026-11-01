@@ -4,6 +4,17 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "lib": ["ESNext", "ES2024", "dom"],
+    "baseUrl": ".",
+    "paths": {
+      "@components/*": ["./src/components/*"],
+      "@services/*": ["./src/services/*"],
+      "@views/*": ["./src/views/*"],
+      "@models/*": ["./src/models/*"],
+      "@helpers/*": ["./src/helpers/*"],
+      "@config/*": ["./src/config/*"],
+      "@styles/*": ["./src/styles/*"],
+      "@/*": ["./src/*"]
+    },
     "allowJs": true,
     "checkJs": false, // existing .js stays unchecked until you convert it
     "strict": true, // applies to .ts files from day one
@@ -13,5 +24,5 @@
     "noEmit": true, // tsc only type-checks; your bundlers do the compiling
     "skipLibCheck": true
   },
-  "include": ["src", "scripts", "netlify", "shared"]
+  "include": ["src/**/*", "scripts/**/*", "netlify/**/*", "shared/**/*"]
 }

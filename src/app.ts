@@ -1,21 +1,21 @@
-import "./styles/map.css";
-import "./styles/trains.css";
-import "./styles/stations.css";
-import "./styles/home.css";
+import "@styles/map.css";
+import "@styles/trains.css";
+import "@styles/stations.css";
+import "@styles/home.css";
 import "./styles.css";
 
-import { state$ } from "./helpers/state.ts";
-import { metroSystem } from "./services/system.ts";
+import { state$ } from "@helpers/state.ts";
+import { metroSystem } from "@services/system.service";
 
-import { render as renderHome } from "./views/home.ts";
-import { pause as pauseStations, render as renderStations } from "./views/stations.ts";
-import { pause as pauseTrains, render as renderTrains } from "./views/trains.ts";
-import { getElement } from "./helpers/utils.ts";
+import { render as renderHome } from "@views/home.ts";
+import { pause as pauseStations, render as renderStations } from "@views/stations.ts";
+import { pause as pauseTrains, render as renderTrains } from "@views/trains.ts";
+import { getElement } from "@helpers/utils.ts";
 
-import type { State } from "./models/state.model.ts";
-import type { View } from "./models/app.model.ts";
-// import { pause as pauseMap, render as renderMap } from "./views/map.js";
-// import { render as renderLines } from "./views/lines.js";
+import type { State } from "@models/state.model.ts";
+import type { View } from "@models/app.model.ts";
+// import { pause as pauseMap, render as renderMap } from "@views/map.js";
+// import { render as renderLines } from "@views/lines.js";
 
 const views = new Map<string, View>([
   ["home", { render: renderHome, route: "/" }],

@@ -1,4 +1,4 @@
-import { FONT_HEIGHT } from "../helpers/dotFont.ts";
+import { FONT_HEIGHT, FONT_WIDTH } from "@helpers/dotFont.ts";
 
 const DOT_RADIUS_PX = 4;
 const DOT_GAP_PX = 1;
@@ -22,18 +22,26 @@ export enum ColumnType {
   Fill = "fill",
 }
 
+export enum ColumnAlign {
+  Left,
+  Center,
+  Right,
+}
+
 export enum TableBoardConfig {
   PaddingX = 2,
   PaddingY = 2,
   Rows = 4,
   RowGap = 4,
   ColGap = 4,
+  BumperHeight = FONT_HEIGHT + 2,
+  BumperWidth = DefaultBoardConfig.MessageMargin + FONT_WIDTH * 2,
   Height = Rows * (FONT_HEIGHT + RowGap) - RowGap + 2 * PaddingY,
-  MaxMessageLength = 10,
-  TypeSpeedMs = 20,
-  TransitionDelayMs = 0,
-  BlinkIntervalMs = 350,
+  MinFillChars = 10,
+  TypeSpeedMs = 30,
+  BlinkIntervalMs = 300,
   BlinkCount = 3,
+  ScrollSpeedMs = 30,
 }
 
 export enum MessageBoardConfig {
@@ -41,7 +49,7 @@ export enum MessageBoardConfig {
   PaddingY = 2,
   Height = FONT_HEIGHT + 2 * (PaddingY + DefaultBoardConfig.MessageMargin),
   BreakpointScale = 800,
-  BumperWidth = 6,
+  BumperWidth = 9,
   PauseMs = 2500,
   ScrollPauseMs = 1500,
   ScrollSpeedMs = 40,

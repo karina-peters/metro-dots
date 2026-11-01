@@ -1,5 +1,5 @@
 import { Observable, defer, interval, of, take, tap, takeUntil, count, finalize } from "rxjs";
-import { TypeMode } from "../models/animation.model.ts";
+import { TypeMode } from "@models/animation.model.ts";
 
 export interface TypewriterOptions {
   typeSpeedMs: number;

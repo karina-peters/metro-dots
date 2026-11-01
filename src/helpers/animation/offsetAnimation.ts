@@ -1,7 +1,7 @@
-import { Observable, defer, interval, take, tap, takeUntil, count, finalize } from "rxjs";
-import { FONT_HEIGHT } from "./dotFont.ts";
-import { DefaultBoardConfig, MessageBoardConfig } from "../config/board.config.ts";
-import { SlideDirection, SlidePhase } from "../models/animation.model.ts";
+import { Observable, defer, interval, take, tap, takeUntil, count, finalize, timer, switchMap } from "rxjs";
+import { FONT_HEIGHT } from "@helpers/dotFont.ts";
+import { DefaultBoardConfig, MessageBoardConfig } from "@config/board.config.ts";
+import { SlideDirection, SlidePhase } from "@models/animation.model.ts";
 
 export interface OffsetAnimationOptions {
   intervalMs: number;
@@ -56,13 +56,14 @@ export class OffsetAnimation {
     return Math.max(0, this._distance - this._progress);
   }
 
-  run$(distance: number): Observable<number> {
+  run$(distance: number, delay: number = 0): Observable<number> {
     return defer(() => {
       this._distance = distance;
       this._progress = 0;
       this._active = true;
 
-      return interval(this.opts.intervalMs).pipe(
+      return timer(delay).pipe(
+        switchMap(() => interval(this.opts.intervalMs)),
         take(Math.ceil(distance / this.opts.step)),
         tap(() => {
           this._progress = Math.min(distance, this._progress + this.opts.step);

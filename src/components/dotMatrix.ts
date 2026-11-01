@@ -1,21 +1,12 @@
 import p5 from "p5";
-import { interval, tap, finalize, Subject, takeUntil, take, last } from "rxjs";
+import { animationFrameScheduler, auditTime, Subject, takeUntil } from "rxjs";
 
-import { CanvasSize } from "../models/board.model.ts";
-import { BACKGROUND_COLOR, DotColor } from "../models/colors.model.ts";
-import { TransitionPhase } from "../models/animation.model.ts";
+import { CanvasSize } from "@models/board.model.ts";
+import { BACKGROUND_COLOR, DotColor } from "@models/colors.model.ts";
+import { TransitionPhase } from "@models/animation.model.ts";
 
-import { DefaultBoardConfig, Dot } from "../config/board.config.ts";
-import { fontData, FONT_WIDTH } from "../helpers/dotFont.ts";
-
-interface Animation {
-  speed: number;
-  step: number;
-  totalDistance: number;
-  onStep: Function;
-  onFinalize: Function;
-  onStart: Function;
-}
+import { DefaultBoardConfig, Dot } from "@config/board.config.ts";
+import { fontData, FONT_WIDTH } from "@helpers/dotFont.ts";
 
 abstract class DotMatrix {
   public destroy$: Subject<void> = new Subject<void>();
@@ -76,7 +67,7 @@ abstract class DotMatrix {
   }
 
   protected setupSubscriptions(p: p5) {
-    this.redraw$.pipe(takeUntil(this.destroy$)).subscribe(() => p.redraw());
+    this.redraw$.pipe(auditTime(0, animationFrameScheduler), takeUntil(this.destroy$)).subscribe(() => p.redraw());
 
     this.destroy$.subscribe(() => {
       console.log("destroying...");

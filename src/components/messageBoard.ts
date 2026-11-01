@@ -16,13 +16,13 @@ import {
   Subject,
 } from "rxjs";
 
-import { DotColor } from "../models/colors.model.ts";
-import { AnimationType, SlideDirection, SlidePhase, TransitionPhase } from "../models/animation.model.ts";
-import type { MessageBoardData, DotPosition } from "../models/board.model.ts";
+import { DotColor } from "@models/colors.model.ts";
+import { AnimationType, SlideDirection, SlidePhase, TransitionPhase } from "@models/animation.model.ts";
+import type { MessageBoardData, DotPosition } from "@models/board.model.ts";
 
-import { Dot, DefaultBoardConfig, MessageBoardConfig, PAGE_PADDING_PX } from "../config/board.config.ts";
-import { OffsetAnimation, slideDisplacement, slideDistance } from "../helpers/offsetAnimation.ts";
-import { FONT_WIDTH } from "../helpers/dotFont.ts";
+import { Dot, DefaultBoardConfig, MessageBoardConfig, PAGE_PADDING_PX } from "@config/board.config.ts";
+import { OffsetAnimation, slideDisplacement, slideDistance } from "@helpers/animation/offsetAnimation.ts";
+import { FONT_WIDTH } from "@helpers/dotFont.ts";
 
 import DotMatrix, { getMessageLength } from "./dotMatrix.ts";
 
@@ -112,8 +112,7 @@ class MessageBoard extends DotMatrix {
   protected override drawContent(p: p5): void {
     let { xPos, yPos } = this.messageStartPos;
 
-    // Don't render any content if the out animation has completed
-    if (this.transitionPhase === TransitionPhase.Out && !this.slide.active) {
+    if (this.messageHidden) {
       return;
     }
 
@@ -124,6 +123,7 @@ class MessageBoard extends DotMatrix {
     if (this.slide.active) {
       const spec = this.transitionPhase === TransitionPhase.In ? this.enterConfig : this.exitConfig;
       const d = slideDisplacement(spec.direction, spec.mode, this.slide.progress, this.slide.remaining);
+
       xPos += d.x * this.dotUnit;
       yPos += d.y * this.dotUnit;
     }
@@ -134,6 +134,13 @@ class MessageBoard extends DotMatrix {
 
       startX += this.dotUnit * (FONT_WIDTH + DefaultBoardConfig.CharGap);
     }
+  }
+
+  protected override backgroundDotColor(_row: number, col: number): string {
+    const visible = this.bumperVisible;
+    const inBumper = col < visible || col >= this.dotColumnCount - visible;
+
+    return inBumper ? this.bumperColor : DotColor.Off;
   }
 
   /**
@@ -159,14 +166,7 @@ class MessageBoard extends DotMatrix {
       .subscribe();
   }
 
-  /**
-   * Starts transition animation for newly selected data
-   * @param p - p5.js instance
-   * @param newDataId - id of the newly selected data
-   * @param newBumperColor - bumper color for the newly selected data
-   * @returns an Observable of the transition animation
-   */
-  private doTransition$ = (p: p5, newDataId: string | undefined, newBumperColor: string | undefined) => {
+  private doTransition$ = (_p: p5, newDataId: string | undefined, newBumperColor: string | undefined) => {
     this.isInTransition = true;
     this.clearSubscriptions();
 
@@ -190,17 +190,11 @@ class MessageBoard extends DotMatrix {
         return forkJoin([this.animateBumpers$(), this.slideMessage$()]);
       }),
       finalize(() => {
+        this.transitionPhase = TransitionPhase.None;
         this.isInTransition = false;
       }),
     );
   };
-
-  protected override backgroundDotColor(_row: number, col: number): string {
-    const visible = this.bumperVisible;
-    const inBumper = col < visible || col >= this.dotColumnCount - visible;
-
-    return inBumper ? this.bumperColor : DotColor.Off;
-  }
 
   private get bumperVisible(): number {
     switch (this.transitionPhase) {
@@ -227,7 +221,6 @@ class MessageBoard extends DotMatrix {
 
   private slideMessage$ = () => {
     console.log(`sliding message ${this.transitionPhase}...`);
-
     const spec = this.transitionPhase === TransitionPhase.In ? this.enterConfig : this.exitConfig;
     const distance = slideDistance(spec.direction, { columns: this.dotColumnCount });
     return this.slide.run$(distance);
@@ -257,6 +250,17 @@ class MessageBoard extends DotMatrix {
     }
 
     return { xPos: startX, yPos: startY };
+  }
+
+  private get messageHidden(): boolean {
+    switch (this.transitionPhase) {
+      case TransitionPhase.Change:
+        return true;
+      case TransitionPhase.Out:
+        return !this.slide.active;
+      default:
+        return false;
+    }
   }
 
   private setMessage(index: number): void {

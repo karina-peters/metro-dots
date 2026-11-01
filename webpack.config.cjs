@@ -1,5 +1,6 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 const path = require("path");
 
 module.exports = {
@@ -16,6 +17,10 @@ module.exports = {
     },
     port: 8080, // Frontend dev server port
     hot: true,
+  },
+  resolve: {
+    extensions: [".ts", ".js", ".css", ".json"],
+    plugins: [new TsconfigPathsPlugin({ configFile: "./tsconfig.json" })],
   },
   module: {
     rules: [

@@ -1,11 +1,14 @@
 import { BehaviorSubject, timer, Subscription, switchMap, from, map, combineLatest, distinctUntilChanged, catchError, of } from "rxjs";
 import p5 from "p5";
 
-import { REFRESH_RATE, metroSystem } from "../services/system.ts";
-import { getElement } from "../helpers/utils.ts";
-import type { Arrival } from "../models/system.model.ts";
+import { REFRESH_RATE, metroSystem } from "@services/system.service.ts";
+import { getElement } from "@helpers/utils.ts";
 
-import TableBoard from "../components/tableBoard.ts";
+import TableBoard from "@components/tableBoard.ts";
+import { ColumnAlign, ColumnType } from "@config/board.config";
+import { DotColor, LineColor } from "@models/colors.model";
+import { TableRow } from "@models/board.model";
+import { ArrivalTracker, TrackedArrivalMap } from "@helpers/arrivalTracker";
 
 const HEADING_TEXT = "Stations";
 const ERROR_MSG_ARRAY = [":(", "", "Error", "?"];
@@ -14,7 +17,8 @@ const HEADER_ARRAY = ["LINE", "CAR", "DEST", "MIN"];
 const DEFAULT_ID = "college-park-u-of-md";
 const DEFAULT_PLATFORM = "E09";
 const DEFAULT_TRACK: Track = 1;
-const HIDDEN_COL = 1;
+const CAR_COL = 1;
+const HIDDEN_COL = CAR_COL;
 const TIME_COL = 3;
 
 enum ActionType {
@@ -69,7 +73,20 @@ export function render(): void {
 
   // Construct board
   const boardTarget: HTMLElement = getElement(".board-target");
-  const board = new TableBoard(boardTarget, HEADER_ARRAY, [], TIME_COL, HIDDEN_COL);
+  const board = new TableBoard(boardTarget, {
+    header: HEADER_ARRAY,
+    rows: [],
+    layout: [
+      { type: ColumnType.Hug, align: ColumnAlign.Right },
+      { type: ColumnType.Hug, align: ColumnAlign.Center },
+      { type: ColumnType.Fill, align: ColumnAlign.Left },
+      { type: ColumnType.Hug, align: ColumnAlign.Right },
+    ],
+    updateCol: TIME_COL,
+    hiddenCol: HIDDEN_COL,
+    bumper: { col: 0, colorFor: (line) => LineColor.get(line) },
+    charColor: (col, char) => (col === CAR_COL && char === "8" ? DotColor.Highlight : undefined),
+  });
   new p5(board.sketch, boardTarget);
   stationBoard = board;
 
@@ -203,19 +220,24 @@ function subscribeToSelectionChanges() {
  * @returns The subscription that manages polling and board updates.
  */
 function subscribeToDataUpdates(board: TableBoard) {
+  const tracker = new ArrivalTracker();
+
   return selection$
     .pipe(
       map((selection) => selection.stationId),
       distinctUntilChanged(),
-      switchMap((stationId) =>
-        combineLatest([selection$, pollArrivals(stationId)]).pipe(
+      switchMap((stationId) => {
+        tracker.reset();
+        const arrivals$ = pollArrivals(stationId).pipe(map((arrivals) => tracker.update(arrivals)));
+
+        return combineLatest([selection$, arrivals$]).pipe(
           map(([selection, arrivals]) => ({
             dataId: selection.stationId,
             viewKey: `${selection.platformCode}|${selection.track}`,
             messageTable: getMessageTable(selection.platformCode, selection.track, arrivals),
           })),
-        ),
-      ),
+        );
+      }),
     )
     .subscribe((data) => board.data$.next(data));
 }
@@ -231,18 +253,18 @@ function subscribeToDataUpdates(board: TableBoard) {
  * @param arrivals - Arrival data indexed by platform and track, or null if unavailable.
  * @returns The rows to display on the station board.
  */
-function getMessageTable(platformId: string, trackIndex: number, arrivals: Map<string, Map<string, Arrival[]>> | null) {
+function getMessageTable(platformId: string, trackIndex: number, arrivals: TrackedArrivalMap): TableRow[] {
   const platform = arrivals?.get(platformId);
   if (!platform) {
-    return [ERROR_MSG_ARRAY];
+    return [{ id: 500, cells: ERROR_MSG_ARRAY }];
   }
 
   const group = platform.get(String(trackIndex));
   if (!group?.length) {
-    return [EMPTY_MSG_ARRAY];
+    return [{ id: 200, cells: EMPTY_MSG_ARRAY }];
   }
 
-  return group.map(({ line, numCars, destName, min }) => [line, numCars, destName, min]);
+  return group.map(({ id, line, numCars, destName, min }) => ({ id: id, cells: [line, numCars, destName, min] }));
 }
 
 function renderStationList() {
