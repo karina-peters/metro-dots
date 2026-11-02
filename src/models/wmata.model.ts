@@ -36,4 +36,8 @@ export type StationDTO = {
   id: string;
   name: string;
   code: string;
+  fullname: string;
+  transfer: boolean;
+  terminus: boolean;
+  lines?: string[];
 };

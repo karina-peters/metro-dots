@@ -14,6 +14,9 @@
   --line-YL: #ffd700;
   --line-SV: #b2b4b2;
   --line-BL: #3772ff;
+  --dot-on: #ebb100;
+  --dot-off: #111111;
+  --dot-dim: #7a7157;
   --border-radius: 0.5rem;
 }
 
@@ -22,7 +25,10 @@
 /* ========================== */
 
 body {
-  font-family: "Helvetica Neue", -apple-system, sans-serif;
+  font-family:
+    "Helvetica Neue",
+    -apple-system,
+    sans-serif;
   color: var(--color-text-light);
   background-color: var(--color-background);
   display: flex;
@@ -54,6 +60,7 @@ button {
   font-size: 1.25rem;
   border: none;
   text-transform: uppercase;
+  cursor: pointer;
 }
 button:hover {
   background-color: #eee;

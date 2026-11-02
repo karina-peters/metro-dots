@@ -24,7 +24,20 @@ async function main() {
   const lines = deriveLines(routes);
 
   const outputsFiles = [
-    [path.join(PUBLIC_DATA, "stations.json"), { data: stations.map((s) => ({ id: s.id, code: s.code, name: s.name })) }],
+    [
+      path.join(PUBLIC_DATA, "stations.json"),
+      {
+        data: stations.map((s) => ({
+          id: s.id,
+          code: s.code,
+          name: s.name,
+          fullname: s.fullname,
+          transfer: s.transfer,
+          terminus: s.terminus,
+          lines: s.lines,
+        })),
+      },
+    ],
     [path.join(PUBLIC_DATA, "lines.json"), { data: [...lines.keys()] }],
     [path.join(PUBLIC_DATA, "routes.json"), { data: routes }],
     ...regions.map((r) => [path.join(PUBLIC_DATA, "regions", `${r.Id}.json`), { data: r }]),

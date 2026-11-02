@@ -6,6 +6,30 @@
   margin: 0 0 2rem 0;
 }
 
+.switch-target {
+  button {
+    margin-right: 0.25rem;
+  }
+}
+
+.list-target {
+  .btn-station {
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-station.transfer {
+    padding-left: 0.75rem;
+    color: var(--dot-on);
+  }
+
+  .btn-station.terminus {
+    padding-left: 0.75rem;
+  }
+}
+
 .station-label {
   margin: 1rem 0;
   font-size: 1.5rem;
