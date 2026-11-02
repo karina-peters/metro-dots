@@ -2,6 +2,9 @@ export type Station = {
   id: string;
   codes: string[];
   name: string;
+  transfer: boolean;
+  terminus: boolean;
+  lines?: string[];
 };
 
 export type Circuit = {

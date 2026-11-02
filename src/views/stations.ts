@@ -49,6 +49,15 @@ const selection$ = new BehaviorSubject<Selection>({
 let stationBoard: TableBoard | null = null;
 let subscription = new Subscription();
 
+const transferIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="1.5rem" width="1.5rem" fill="currentColor"><path d="M12,15q-1.25,0-2.13-0.88T9,12T9.88,9.88T12,9t2.13,0.88T15,12t-0.88,2.13T12,15ZM8.1,21.21q-1.82-0.79-3.17-2.14Q3.58,17.73 2.79,15.9T2,12Q2,9.92 2.79,8.1Q3.58,6.27 4.93,4.93Q6.28,3.57 8.1,2.79Q9.93,2 12,2t3.9,0.79t3.17,2.14q1.35,1.35 2.14,3.17Q22,9.92 22,12t-0.79,3.9t-2.14,3.17q-1.35,1.35-3.17,2.14T12,22q-2.07,0-3.9-0.79ZM12,20q3.33,0 5.66-2.34T20,12q0-3.33-2.34-5.66T12,4Q8.68,4 6.34,6.34T4,12t2.34,5.66T12,20Zm0-8Zm3.54,3.54Q17,14.08 17,12q0-2.08-1.46-3.54T12,7Q9.93,7 8.46,8.46T7,12t1.46,3.54T12,17t3.54-1.46Z"/></svg>`;
+const terminusIcons = (lines: string[]) =>
+  lines
+    .map(
+      (lineCode) =>
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24px" width="24px" fill="${LineColor.get(lineCode)}"><path d="M12,22q-2.07,0-3.9-0.79q-1.82-0.79-3.17-2.14Q3.58,17.73 2.79,15.9T2,12Q2,9.92 2.79,8.1Q3.58,6.27 4.93,4.93Q6.28,3.57 8.1,2.79Q9.93,2 12,2t3.9,0.79t3.17,2.14q1.35,1.35 2.14,3.17Q22,9.92 22,12t-0.79,3.9t-2.14,3.17q-1.35,1.35-3.17,2.14T12,22Z"/></svg>`,
+    )
+    .join("");
+
 const template = () => {
   return `
     <div class="station-label"></div>
@@ -270,11 +279,17 @@ function getMessageTable(platformId: string, trackIndex: number, arrivals: Track
 function renderStationList() {
   try {
     const listTarget = getElement(".list-target");
+    const sortedStations = [...metroSystem.stations].sort((a, b) => a.name.localeCompare(b.name));
 
-    for (const station of metroSystem.stations) {
+    for (const station of sortedStations) {
+      const classes = ["btn-dark", "btn-station"];
+      station.transfer ? classes.push("transfer") : station.terminus ? classes.push("terminus") : null;
+      const icons = station.transfer ? transferIcon : station.terminus ? terminusIcons(station.lines || []) : "";
+
       const button = document.createElement("button");
-      button.classList.add("btn-dark", "btn-station");
+      button.classList.add(...classes);
       button.textContent = station.name;
+      button.innerHTML = `${icons ? "<span class='station-icons'>" + icons + "</span>" : ""}<span class="station-name">${station.name}</span>`;
       button.dataset.stationId = station.id;
 
       listTarget.appendChild(button);

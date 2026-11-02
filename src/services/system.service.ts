@@ -158,6 +158,9 @@ class SystemService {
         id: data.id,
         name: data.name,
         codes: [],
+        transfer: data.transfer,
+        terminus: data.terminus,
+        lines: data.lines || [],
       });
 
       station.codes.push(data.code);
