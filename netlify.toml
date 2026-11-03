@@ -5,3 +5,7 @@
     from = "/*"
     to = "/index.html"
     status = 200
+[context.deploy-preview.environment]
+  DEBUG_LOGS = "true"
+[context.branch-deploy.environment]
+  DEBUG_LOGS = "true"

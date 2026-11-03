@@ -6,7 +6,9 @@ import { BACKGROUND_COLOR, DotColor } from "@models/colors.model.ts";
 import { TransitionPhase } from "@models/animation.model.ts";
 
 import { DefaultBoardConfig, Dot } from "@config/board.config.ts";
+
 import { fontData, FONT_WIDTH } from "@helpers/dotFont.ts";
+import { debug } from "@helpers/logger";
 
 abstract class DotMatrix {
   public destroy$: Subject<void> = new Subject<void>();
@@ -23,12 +25,8 @@ abstract class DotMatrix {
   protected canvasSize: CanvasSize = { width: 0, height: 0 };
   protected isInTransition = true;
   protected transitionPhase = TransitionPhase.None;
+  protected grid: p5.Graphics | null = null;
 
-  /**
-   * Construct new instance of DotMatrix
-   * @param numRows - Number of dot rows on board
-   * @param numCols - Number of dot columns on board
-   */
   constructor(numRows: number, numCols: number) {
     this.dotColumnCount = numCols;
     this.dotRowCount = numRows;
@@ -49,18 +47,26 @@ abstract class DotMatrix {
         p.windowResized = () => {
           this.setCanvasSize();
           p.resizeCanvas(this.canvasSize.width, this.canvasSize.height);
+
+          this.rebuildGrid(p);
           p.redraw();
         };
 
+        this.rebuildGrid(p);
         this.setupSubscriptions(p);
       };
 
       p.draw = () => {
+        p.ellipseMode(p.RADIUS);
         p.scale(this.scale);
         p.background(BACKGROUND_COLOR);
         p.noFill();
 
-        this.drawBoard(p);
+        if (this.grid) {
+          p.image(this.grid, 0, 0);
+        }
+
+        this.drawLitBoard(p);
         this.drawContent(p);
       };
     };
@@ -70,25 +76,48 @@ abstract class DotMatrix {
     this.redraw$.pipe(auditTime(0, animationFrameScheduler), takeUntil(this.destroy$)).subscribe(() => p.redraw());
 
     this.destroy$.subscribe(() => {
-      console.log("destroying...");
+      debug("destroying...");
     });
   }
 
   /**
-   * Draw the dot matrix board background with highlight color
+   * Cache the background board in a graphics buffer
    * @param p - p5.js instance
    */
-  protected drawBoard(p: p5) {
-    p.ellipseMode(p.RADIUS);
+  protected rebuildGrid(p: p5) {
+    this.grid?.remove();
+
+    const g = p.createGraphics(this.dotColumnCount * this.dotUnit - this.dotGap, this.dotRowCount * this.dotUnit - this.dotGap);
+    g.ellipseMode(g.RADIUS);
+    g.background(BACKGROUND_COLOR);
+    g.fill(DotColor.Off);
+
+    for (let row = 0; row < this.dotRowCount; row++) {
+      for (let col = 0; col < this.dotColumnCount; col++) {
+        g.ellipse(this.dotRadius + col * this.dotUnit, this.dotRadius + row * this.dotUnit, this.dotRadius, this.dotRadius);
+      }
+    }
+
+    this.grid = g;
+  }
+
+  protected drawLitBoard(p: p5) {
+    let lastFill = "";
 
     for (let row = 0; row < this.dotRowCount; row++) {
       const dotY = this.dotRadius + row * this.dotUnit;
 
       for (let col = 0; col < this.dotColumnCount; col++) {
-        const dotX = this.dotRadius + col * this.dotUnit;
+        const color = this.backgroundDotColor(row, col);
+        if (color === DotColor.Off) {
+          continue;
+        }
+        if (color !== lastFill) {
+          p.fill(color);
+          lastFill = color;
+        }
 
-        p.fill(this.backgroundDotColor(row, col));
-        p.ellipse(dotX, dotY, this.dotRadius, this.dotRadius);
+        p.ellipse(this.dotRadius + col * this.dotUnit, dotY, this.dotRadius, this.dotRadius);
       }
     }
   }
@@ -107,10 +136,10 @@ abstract class DotMatrix {
    * @param color - Color to render the char in
    */
   protected renderChar(p: p5, char: string, startX: number, startY: number, color: string) {
-    p.ellipseMode(p.RADIUS);
-
     const charMatrix = fontData.get(char.toUpperCase()) || fontData.get(" ") || []; // Default to space if character not found
     const { top, right, bottom, left } = this.textField;
+
+    p.fill(color);
 
     let dotY = startY;
 
@@ -119,7 +148,6 @@ abstract class DotMatrix {
 
       for (const dotVal of row) {
         if (dotVal === 1 && dotY >= top && dotX <= right && dotY <= bottom && dotX >= left) {
-          p.fill(color);
           p.ellipse(dotX, dotY, this.dotRadius, this.dotRadius);
         }
 

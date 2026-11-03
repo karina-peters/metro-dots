@@ -23,6 +23,7 @@ import type { MessageBoardData, DotPosition } from "@models/board.model.ts";
 import { Dot, DefaultBoardConfig, MessageBoardConfig, PAGE_PADDING_PX } from "@config/board.config.ts";
 import { OffsetAnimation, slideDisplacement, slideDistance } from "@helpers/animation/offsetAnimation.ts";
 import { FONT_WIDTH } from "@helpers/dotFont.ts";
+import { debug } from "@helpers/logger.ts";
 
 import DotMatrix, { getMessageLength } from "./dotMatrix.ts";
 
@@ -178,7 +179,7 @@ class MessageBoard extends DotMatrix {
       }),
       tap(() => {
         this.transitionPhase = TransitionPhase.Change;
-        console.log(`changing from ${this.dataId} to ${newDataId}`);
+        debug(`changing from ${this.dataId} to ${newDataId}`);
 
         this.bumperColor = newBumperColor || DotColor.Off;
         this.dataId = newDataId;
@@ -213,21 +214,22 @@ class MessageBoard extends DotMatrix {
    * Start scrolling animation for a message that doesn't fit on the display
    */
   private scrollMessage$ = () => {
-    console.log("scrolling...");
+    debug("scrolling...");
 
     const distance = getMessageLength(this.currentMessage) + MessageBoardConfig.BumperWidth + 2 * DefaultBoardConfig.MessageMargin;
     return this.scroll.run$(distance);
   };
 
   private slideMessage$ = () => {
-    console.log(`sliding message ${this.transitionPhase}...`);
+    debug(`sliding message ${this.transitionPhase}...`);
+
     const spec = this.transitionPhase === TransitionPhase.In ? this.enterConfig : this.exitConfig;
     const distance = slideDistance(spec.direction, { columns: this.dotColumnCount });
     return this.slide.run$(distance);
   };
 
   private animateBumpers$ = () => {
-    console.log(`animating bumpers ${this.transitionPhase}...`);
+    debug(`animating bumpers ${this.transitionPhase}...`);
 
     return this.bumper.run$(MessageBoardConfig.BumperWidth);
   };
