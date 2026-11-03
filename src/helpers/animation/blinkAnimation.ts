@@ -32,7 +32,6 @@ export class Blinker {
       return timer(0, this.opts.intervalMs).pipe(
         take(this.opts.count * 2),
         tap((i) => {
-          // TODO: make this start off
           this.off = i % 2 === 0;
           this.onFrame();
         }),

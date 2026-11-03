@@ -28,6 +28,13 @@
   .btn-station.terminus {
     padding-left: 0.75rem;
   }
+
+  .station-icons {
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    gap: 0.25rem;
+  }
 }
 
 .station-label {

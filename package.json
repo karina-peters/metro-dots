@@ -8,9 +8,8 @@
   "scripts": {
     "build": "node scripts/build-data.js && webpack --mode production",
     "build:data": "node --env-file=.env scripts/build-data.js",
-    "dev": "netlify dev",
-    "dev:client": "npm run build:data && webpack serve",
-    "start": "npm run build && npm run dev",
+    "dev": "npm run build:data && webpack --mode development && netlify dev",
+    "start": "npm run build && netlify dev",
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },

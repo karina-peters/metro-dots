@@ -20,6 +20,7 @@ import { FONT_HEIGHT, FONT_WIDTH } from "@helpers/dotFont.ts";
 import { Typewriter } from "@helpers/animation/typeAnimation.ts";
 import { Blinker } from "@helpers/animation/blinkAnimation.ts";
 import { OffsetAnimation } from "@helpers/animation/offsetAnimation.ts";
+import { debug } from "@helpers/logger.ts";
 
 import DotMatrix, { getMessageLength } from "./dotMatrix.ts";
 
@@ -198,7 +199,7 @@ class TableBoard extends DotMatrix {
       }),
       map(() => {
         this.transitionPhase = TransitionPhase.Change;
-        console.log(`changing from ${this.dataId} to ${newDataId}`);
+        debug(`changing from ${this.dataId} to ${newDataId}`);
 
         const enterHeading = !this.dataId;
         this.dataId = newDataId;
@@ -222,6 +223,7 @@ class TableBoard extends DotMatrix {
       const updated = this.getUpdatedRows(this.messageTable, incoming);
       this.messageTable = incoming;
       this.redraw$.next();
+
       return updated.length ? this.blinker.blink$(BlinkMode.UpdateCol, updated) : EMPTY;
     });
 
@@ -235,7 +237,7 @@ class TableBoard extends DotMatrix {
   }
 
   private typeContent$ = (mode: TypeMode, includeHeading: boolean) => {
-    console.log(`typing message ${mode}...`);
+    debug(`typing message ${mode}...`);
 
     const messages = this.messageTable.map((r) => r.cells);
     const rows = [this.tableHeader, ...messages].map((cells, rowIndex) => ({ cells, rowIndex }));
@@ -243,7 +245,7 @@ class TableBoard extends DotMatrix {
   };
 
   private animateBumpers$ = (typingHeading: boolean) => {
-    console.log(`animating bumpers ${this.transitionPhase}...`);
+    debug(`animating bumpers ${this.transitionPhase}...`);
 
     return this.bumper.run$(this.bumperScrollDistance, typingHeading ? this.headerTypingMs : 0);
   };
